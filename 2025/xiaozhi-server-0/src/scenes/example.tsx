@@ -139,8 +139,8 @@ export default makeScene2D(function* (view) {
 
   yield* waitUntil('start_rotation');
   if (rotationTask) cancel(rotationTask);
-  rotationTask =  spawn(loop(() => rotatingSquare().position.x(100, 3).to(-200, 3)));
-  
+  rotationTask = spawn(loop(() => rotatingSquare().position.x(100, 3).to(-200, 3)));
+
   yield* all(
     //gridSpacing(100, 2),
     camera().zoom(1.5, 2),
