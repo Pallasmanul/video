@@ -1,8 +1,8 @@
-import { Circle, lines, makeScene2D, word } from '@motion-canvas/2d';
+import { Circle, lines, makeScene2D, SVG, word } from '@motion-canvas/2d';
 import { all, createRef, waitFor } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, Editor, createPageRef, createEditorRef } from '../components';
 import { BoxGeometry } from 'three';
-
+import Icon from '../../../../../pallasmanul/桌面/icon.svg?raw'
 
 
 export default makeScene2D(function* (view) {
@@ -22,6 +22,7 @@ export default makeScene2D(function* (view) {
         y={80}
         opacity={1}
       ></Container>
+      <SVG svg={Icon} layout stroke={'rgb(255, 255, 255)'} lineWidth={100} fill={'rgb(255, 255, 255)'}/>      
       <Editor
         files={['index.js', 'index.css']}
         width={800}
