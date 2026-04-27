@@ -8,4 +8,5 @@ export * from './Three';
 export * from './Window';
 export * from './Slider';
 export * from './Container';
-export * from './CodeEditor';
+export * from './CodeDebugBar';
+export * from './FileBar';
