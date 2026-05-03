@@ -124,11 +124,11 @@ export default makeScene2D(function* (view) {
   const codeTerminalRef = createCodeTerminalRef();
   view.add(
     <>
-      <CodeTerminal refs={codeTerminalRef} fill={'#626262'} opacity={1} />
+      <CodeTerminal refs={codeTerminalRef} fill={'#626262'} opacity={1} width={1200} height={300} />
     </>
   )
   codeTerminalRef.code.code("pallasmanul@pallasmanul:    HelloWorld!  ")
-
+  yield* appendToCode("pallasmanul@pallasmanul: printf('Hello World!')", codeTerminalRef.code);
 
   view.add(
     <>
@@ -242,9 +242,9 @@ export default makeScene2D(function* (view) {
 
 
 function* appendToCode(
-  code: string,
-  page: typeof Page,
+  code_text: string,
+  code: typeof Code,
 ) {
-  const previous = page.code.parsed();
-  yield* page.code.code(`${previous}\n${code}`, 0.6)
+  const previous = code.parsed();
+  yield* code.code.append(`\n${code_text}`, 0.6)
 }

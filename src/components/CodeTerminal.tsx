@@ -6,7 +6,7 @@ import {
     SignalValue,
     SimpleSignal,
 } from '@motion-canvas/core';
-import { PlainCode } from "./Code";
+import { TerminalCode } from "./Code";
 
 
 interface CodeTerminalRefs {
@@ -34,13 +34,13 @@ export function CodeTerminal({
             direction={'column'}
             layout
             textAlign={'center'}
-            justifyContent={'center'}
+            justifyContent={'start'}
             paddingTop={10}
+            radius={8}
             {...rest}
         >
-            <PlainCode
+            <TerminalCode
                 ref={makeRef(refs, 'code')}
-                highlighter={null}
                 margin={20}
                 fill={'rgba(255, 255, 255, 0.6)'}
             />

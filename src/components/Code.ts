@@ -184,6 +184,81 @@ class YamlHighlighter extends LezerHighlighter {
   }
 }
 
+// 终端高亮器 - 用于高亮命令行前缀如 pallasmanul@pallasmanul:
+const PROMPT_COLOR = '#0ce81e'; // 绿色用于提示符
+const COMMAND_COLOR = '#ffffff'; // 白色用于命令文本
+
+class TerminalHighlighter extends LezerHighlighter {
+  constructor() {
+    // 调用父类构造函数，传递 null 作为 parser（使用自定义 tokenize）和 Style 作为高亮样式
+    super(yaml, Style);
+  }
+ 
+  tokenize(code: string): string[] {
+    const tokens: string[] = [];
+    let currentToken = '';
+    let whitespace = false;
+ 
+    for (const char of code) {
+      switch (char) {
+        case ' ':
+        case '\t':
+        case '\n':
+        case '"':
+        case "'":
+        case '{':
+        case '}':
+        case '[':
+        case '(':
+        case ')':
+        case ',':
+        case ':':
+        default:
+          if (whitespace && currentToken !== '') {
+            tokens.push(currentToken);
+            currentToken = '';
+          }
+          whitespace = false;
+          currentToken += char;
+          break;
+      }
+    }
+ 
+    if (currentToken !== '') {
+      tokens.push(currentToken);
+    }
+ 
+    return tokens;
+  }
+ 
+  highlight(index: number, cache: any): HighlightResult {
+    const value = super.highlight(index, cache);
+    
+    // 检查当前位置是否在提示符前缀中
+    // 提示符格式: username@hostname:
+    const code = cache.code;
+   // 找到当前行的起始位置（从当前索引向前查找换行符）
+    let lineStartIndex = index;
+    while (lineStartIndex > 0 && code[lineStartIndex - 1] !== '\n') {
+      lineStartIndex--;
+    }
+    
+    // 检查当前行是否以提示符格式开头
+    const lineContent = code.substring(lineStartIndex);
+    const promptMatch = lineContent.match(/^[^@]+@[^:]+:/);
+    
+    if (promptMatch && index < lineStartIndex + promptMatch[0].length) {    
+      value.color = PROMPT_COLOR;
+    } else 
+    {
+      value.color = COMMAND_COLOR;
+    }
+    
+    return value;
+  }
+}
+
+
 const Defaults: CodeProps = {
   drawHooks: {
     token(ctx, text, position, color, selection) {
@@ -252,5 +327,10 @@ export const CssCode = withDefaults(Code, {
 
 export const PyCode = withDefaults(Code, {
   highlighter: new LezerHighlighter(py, Style),
+  ...Defaults,
+});
+
+export const TerminalCode = withDefaults(Code, {
+  highlighter: new TerminalHighlighter(),
   ...Defaults,
 });
