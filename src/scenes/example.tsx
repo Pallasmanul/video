@@ -14,6 +14,9 @@ export default makeScene2D(function* (view) {
   const textArrayRef = createRefArray<typeof ATxt>()
   const reactArrayRef = createRefArray<Rect>()
   const groupRef = createRef<Node>()
+  const pageRef = createPageRef()
+
+  view.fill('#1c1c1c')
 
   view.fill('#000000')
 
@@ -67,7 +70,16 @@ export default makeScene2D(function* (view) {
         />
       </Node>
     </>
-  );
+  )
+
+  yield* all(
+    pageRef.rect.opacity(0).opacity(1, 1),
+    pageRef.rect.height(0).height(600, 1),
+  )
+
+  yield* appendToCode("", pageRef)
+  yield* appendToCode("for i in range(10): \n   print(i)", pageRef)
+
 
 
 
@@ -124,20 +136,22 @@ export default makeScene2D(function* (view) {
   view.add(
     <>
       <Rect
+        x={0}
+        y={0}
         ref={word_x_max_rectRef}
         layout={true}
-        fill={0.3}
+        fill={'#2a2a2a'}
+        stroke={'#ffffff'}
+        lineWidth={2}
         opacity={0}
         paddingTop={7}
         paddingBottom={12}
         paddingLeft={12}
         paddingRight={12}
         radius={8}
-        offsetY={6}
-        zIndex={-1}
       >
         <ATxt
-          text={Python_Buildin_Function.split(" ")[62]}
+          text={"printf()"}
           opacity={1}
         />
       </Rect>
@@ -232,3 +246,10 @@ export default makeScene2D(function* (view) {
 });
 
 
+function* appendToCode(
+  code: string,
+  page: typeof Page,
+) {
+  const previous = page.code.parsed();
+  yield *page.code.code(`${previous}\n${code}`, 0.6) 
+}

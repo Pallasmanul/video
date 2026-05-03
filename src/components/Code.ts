@@ -10,7 +10,7 @@ import {parser as cpp} from '@lezer/cpp';
 import {parser as markdown} from '@lezer/markdown';
 import {parser as json} from '@lezer/json';
 import {parser as xml} from '@lezer/xml';
-
+import {parser as py} from '@lezer/python';
 
 import {
   Code,
@@ -247,5 +247,10 @@ export const HtmlCode = withDefaults(Code, {
 
 export const CssCode = withDefaults(Code, {
   highlighter: new LezerHighlighter(css, Style),
+  ...Defaults,
+});
+
+export const PyCode = withDefaults(Code, {
+  highlighter: new LezerHighlighter(py, Style),
   ...Defaults,
 });
