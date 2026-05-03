@@ -10,3 +10,4 @@ export * from './Slider';
 export * from './Container';
 export * from './CodeDebugBar';
 export * from './FileBar';
+export * from './CodeCursor';
