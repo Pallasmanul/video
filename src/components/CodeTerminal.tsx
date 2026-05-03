@@ -14,6 +14,9 @@ interface CodeTerminalRefs {
     code: Rect;
 }
 
+export function createCodeTerminalRef() {
+    return makeRefs<typeof CodeTerminal>();
+}
 
 export interface CodeTerminalProps extends RectProps {
     label?: SignalValue<string>;
@@ -28,6 +31,11 @@ export function CodeTerminal({
     return (
         <Rect
             ref={ref ?? makeRef(refs, 'rect')}
+            direction={'column'}
+            layout
+            textAlign={'center'}
+            justifyContent={'center'}
+            paddingTop={10}
             {...rest}
         >
             <PlainCode

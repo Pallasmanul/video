@@ -2,6 +2,7 @@ import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path } from '@motion
 import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCurosr, CodeCursor, createCodeCursorRef } from '../components';
 import { BoxGeometry } from 'three';
+import { CodeTerminal, createCodeTerminalRef } from '../components/CodeTerminal';
 
 const Python_Buildin_Function = "abs() ailter() all() anext() any() ascii() bin() bool() breakpoint() bytearray() bytes() callback() chr() classmethod() compile() complex() delattr() dict() dir() divmod() \
 enumerate() eval() exec() filter() float() format() frozenset() getattr() globals() hasattr() hash() help() hex() id() input() int() isinstance() issubclass() iter() \
@@ -72,16 +73,6 @@ export default makeScene2D(function* (view) {
     </>
   )
 
-  yield* all(
-    pageRef.rect.opacity(0).opacity(1, 1),
-    pageRef.rect.height(0).height(600, 1),
-  )
-
-  yield* appendToCode("", pageRef)
-  yield* appendToCode("for i in range(10): \n   print(i)", pageRef)
-
-
-
 
   const window = createRef<Window>();
   const border = createRef<Rect>();
@@ -110,7 +101,7 @@ export default makeScene2D(function* (view) {
           clip
         >
           <Rect fill={"#050404"} ref={panels}>
-            <CodeCursor refs={codeCursorRef} stroke={"#fff200"} lineWidth={4} marginLeft={12} marginTop={28 * 1.5 * 9 + 28 * 1.45} lineHeight={'150%'} fontSize={28} />
+            <CodeCursor refs={codeCursorRef} stroke={"#fff200"} lineWidth={4} marginLeft={12} marginTop={28 * 1.5 * 15 + 28 * 1.3} lineHeight={'150%'} fontSize={28} />
             <PlainCode
               fill={'#666'}
               marginTop={28}
@@ -126,11 +117,17 @@ export default makeScene2D(function* (view) {
     </>
   )
 
-  yield* codeCursorRef.bg()
-    .marginTop(28 * 1.5 * 9 + 28 * 1.45)
-    .marginTop(28 * 1.5 * 12 + 28 * 1.45, 1);
+  yield* panels().size(200, 2);
+  yield* codeCursorRef.bg.y(12, 0.6);
 
-  yield* panels().size(200, 2 );
+
+  const codeTerminalRef = createCodeTerminalRef();
+  view.add(
+    <>
+      <CodeTerminal refs={codeTerminalRef} fill={'#626262'} opacity={1} />
+    </>
+  )
+  codeTerminalRef.code.code("pallasmanul@pallasmanul:    HelloWorld!  ")
 
 
   view.add(
@@ -157,8 +154,6 @@ export default makeScene2D(function* (view) {
       </Rect>
     </>
   );
-
-
 
 
 
@@ -251,5 +246,5 @@ function* appendToCode(
   page: typeof Page,
 ) {
   const previous = page.code.parsed();
-  yield *page.code.code(`${previous}\n${code}`, 0.6) 
+  yield* page.code.code(`${previous}\n${code}`, 0.6)
 }
