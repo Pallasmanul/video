@@ -2,7 +2,7 @@ import { Layout } from "@motion-canvas/2d";
 import { all, easeOutCubic, TimingFunction } from "@motion-canvas/core";
 
 
-function* reveal(
+export function* reveal(
   rect: Layout,
   time = 0.3,
   timingFunction: TimingFunction = easeOutCubic,
