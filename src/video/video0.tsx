@@ -1,5 +1,5 @@
 import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path } from '@motion-canvas/2d';
-import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence } from '@motion-canvas/core';
+import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCursor, createCodeCursorRef, PyCode } from '../components';
 import { BoxGeometry } from 'three';
 import { CodeTerminal, createCodeTerminalRef } from '../components/CodeTerminal';
@@ -10,6 +10,14 @@ enumerate() eval() exec() filter() float() format() frozenset() getattr() global
 len() list() locals() map() max() memoryview() min() next() object() oct() open() ord() pow() print() property() \
 range() repr() reversed() round() set() setattr() slice() sorted() staticmethod() str() sum() super() tuple() type() vars() zip()";
 
+const Numeric_Math_Buildin_Function = "abs() round() pow() divmod() sum() min() max()"
+const Type_Conversion_Buildin_Function = "int() float() complex() str() bool() list() tuple() set() dict() frozenset() bytes() bytearray()"
+const Iteration_Functional_Buildin_Function = "len() range() enumerate() zip() map() filter() sorted() reversed() iter() next()"
+const Object_Introspection_Build_Function = "type() id() isinstance() issubclass() dir() vars() callable() getattr() setattr() hasattr() delattr()"
+const Input_Output_Build_Function = "print() input() open() help()"
+const Execution_Compilation_Build_Function = "eval() exec() compile() __import__()"
+const Special_Utilities_Build_Function = "ascii() bin() hex() oct() format() hash() globals() locals() property() staticmethod() classmethod() super()"
+const Debug_Build_Function = "memoryview() breakpoint()"
 
 
 export default makeScene2D(function* (view) {
@@ -24,17 +32,18 @@ export default makeScene2D(function* (view) {
             label="Python"
             ref={groupRef}
             fill={'#1e1e1e'}
+            clip
             children={
                 <PyCode
                     lineHeight={'150%'}
                     offset={-1}
                     code={""}
                     ref={codeRef}
-                    opacity={0}
+                    opacity={1}
                 />
             }
-            width={500}
-            height={300}
+            width={350}
+            height={380}
             radius={16}
             opacity={1}
         >
@@ -45,7 +54,7 @@ export default makeScene2D(function* (view) {
         <>
             <Node
                 scale={1.3}
-                position={[-160, -130]}
+                position={[-160, -100]}
                 opacity={1}
                 ref={logoRef}
             >
@@ -82,20 +91,236 @@ export default makeScene2D(function* (view) {
     )
 
     yield* sequence(
-        0.6,
+        0.3,
         logoRef().opacity(0, 0.6),
-        waitFor(1),
+        groupRef().height(1000, 0.6),
     );
-    yield* all(
-        groupRef().height(600, 0.6),
-        codeRef().opacity(1, 0.6),
-        codeRef().code("import()", 0.5),
-    )
-    yield* waitFor(0.5);
-    yield* codeRef().code.append("\nabs()", 0.5);
-    yield* waitFor(0.5);
-    yield* codeRef().code.append("\nall()", 0.5);
 
-    yield* waitFor(1);
+    const functions = Python_Buildin_Function.split(" ").slice(0, 20);
+    yield* codeRef().code("import()", 0.1);
+    for (const func of functions) {
+        yield* codeRef().code.append("\n" + func, 0.1);
+    }
+
+    yield* all(
+        groupRef().height(1000, 0.6),
+        //groupRef().x(-view.width() / 4 - 120, 0.6, easeInOutCubic),
+    )
+
+    yield* groupRef().opacity(0, 0.6);
+
+
+
+    // const pageRef = createPageRef()
+
+    // view.add(
+    //     <Page
+    //         refs={pageRef}
+    //         label="数学内置函数"
+    //         opacity={0}
+    //         theme={{
+    //             bg: '#1e1e1e',
+    //             bgDark: '#0f0d0c',
+    //             radius: 16,
+    //         }}
+    //         height={500}
+    //         width={350}
+    //         component={PyCode}
+    //         code={""}
+    //     >
+    //     </Page>
+    // )
+
+    // yield* waitFor(0.4);
+    // yield* pageRef.rect.opacity(1, 0.6);
+    // yield* pageRef.code.code(Numeric_Math_Buildin_Function.split(" ")[0], 0.1);
+    // for (const func of Numeric_Math_Buildin_Function.split(" ").slice(1)) {
+    //     yield* pageRef.code.code.append("\n" + func, 0.1);
+    // }
+
+    const pageRefs = [
+        createPageRef(),
+        createPageRef(),
+        createPageRef(),
+        createPageRef(),
+        createPageRef(),
+        createPageRef(),
+        createPageRef(),
+        createPageRef(),
+    ];
+
+    // 布局参数, 起点 + 间隔
+    const startX = -600;
+    const startY = -200;
+    const gapX = 400;
+    const gapY = 380;
+    const itemsPerRow = 4;
+
+
+    // 定义页面数据
+    const pagesData = [
+        { label: "数学内置函数", data: Numeric_Math_Buildin_Function },
+        { label: "类型转换函数", data: Type_Conversion_Buildin_Function },
+        { label: "迭代功能函数", data: Iteration_Functional_Buildin_Function },
+        { label: "对象自省函数", data: Object_Introspection_Build_Function },
+        { label: "输入输出函数", data: Input_Output_Build_Function },
+        { label: "执行编译函数", data: Execution_Compilation_Build_Function },
+        { label: "特殊工具函数", data: Special_Utilities_Build_Function },
+        { label: "调试函数", data: Debug_Build_Function },
+    ].map((item, index) => ({
+        ...item,
+        pos: {
+            x: startX + (index % itemsPerRow) * gapX,
+            y: startY + Math.floor(index / itemsPerRow) * gapY,
+        },
+    }));
+
+
+    // 添加所有 Page 组件
+    for (let i = 0; i < pagesData.length; i++) {
+        const { label, pos } = pagesData[i];
+        view.add(
+            <Page
+                refs={pageRefs[i]}
+                label={label}
+                opacity={0}
+                theme={{
+                    bg: '#1e1e1e',
+                    bgDark: '#0f0d0c',
+                    radius: 16,
+                }}
+                height={340}
+                width={350}
+                component={PyCode}
+                code={""}
+                x={pos.x}
+                y={pos.y}
+            >
+            </Page>
+        );
+    }
+
+    //依次显示每个页面
+    for (let i = 0; i < pagesData.length; i++) {
+        const ref = pageRefs[i];
+        const data = pagesData[i].data;
+        for (const func of data.split(" ")) {
+            yield* ref.code.code.append("\n" + func, 0.1);
+        }
+        yield* ref.rect.opacity(1, 0.2);
+    }
+
+    yield* waitUntil('click');
+
+    // 只显示第一个组件，让其 y 轴扩大，其他组件消失
+    yield* all(
+        // 第一个组件（数学内置函数）y轴放大
+        pageRefs[0].rect.height(680, 0.8, easeInOutCubic), // 高度也相应增加
+        pageRefs[0].rect.x(-view.width() / 4 - 80, 0.8, easeInOutCubic),
+        pageRefs[0].rect.y(0, 0.8, easeInOutCubic),
+        // 其他组件透明度变为0
+        pageRefs[1].rect.opacity(0, 0.6),
+        pageRefs[2].rect.opacity(0, 0.6),
+        pageRefs[3].rect.opacity(0, 0.6),
+        pageRefs[4].rect.opacity(0, 0.6),
+        pageRefs[5].rect.opacity(0, 0.6),
+        pageRefs[6].rect.opacity(0, 0.6),
+        pageRefs[7].rect.opacity(0, 0.6),
+    );
+
+    for (let i = 1; i < pageRefs.length; i++) {
+        pageRefs[i].rect.height(680);
+        pageRefs[i].rect.x(-view.width() / 4 - 80);
+        pageRefs[i].rect.y(0);
+    }
+
+    yield* waitFor(0.8);
+    yield* pageRefs[0].code.selection(lines(1), 0.6);
+
+    // for (let i = 1; i < pageRefs.length; i++) {
+    //     yield* pageRefs[i].rect.opacity(1, 0.6);
+    //     yield* waitFor(1);
+    // }
+
+
+    yield* waitFor(2);
+
+
+    const pageRef = createPageRef();
+    const codecursorref = createCodeCursorRef();
+    view.add(
+        <>w
+            <Page
+                refs={pageRef}
+                label="main.py"
+                opacity={1}
+                theme={{
+                    bg: '#1e1e1e',
+                    bgDark: '#0f0d0c',
+                    radius: 16,
+                }}
+                height={900}
+                width={800}
+                x={view.width() / 4 - 100}
+                component={PyCode}
+                code={"int x=-10 \nprintf(abs(x)) \n  "}
+            >
+            </Page>
+
+        </>
+    )
+
+    // 获取代码第 2 行（索引为 1）开头的位置
+    const targetLine = createSignal(1)
+
+
+    // 获取该行的世界坐标位置
+    const linePosition = createComputed(() => {
+        const line = targetLine();
+        // 使用 getPointBBox 获取特定位置的边界框
+        const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
+        return pageRef.code.localToWorld().transformPoint(pointBBox().position)
+    }
+    );
+
+    view.add(
+        <CodeCursor
+            refs={codecursorref}
+            absolutePosition={() => {
+                const line = targetLine();
+                // 使用 getPointBBox 获取特定位置的边界框
+                const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
+                return pageRef.code.localToWorld().transformPoint(pointBBox().position)
+            }}
+            offset={[2, -2]}
+            layout={false}
+        />
+    );
+
+    // 创建指针跳转动画函数
+    function* cursorJumpAnimation() {
+        const targetLines = [1, 2, 3]; // 指针跳转的行序列
+
+        for (const line of targetLines) {
+            yield* tween(0.5, (value) => {
+                const easedValue = easeInOutCubic(value);
+                const current = targetLine();
+                const next = line;
+                targetLine(Math.round(current + (next - current) * easedValue));
+            });
+        }
+    }
+
+//    创建循环动画
+    yield loop(function* () {
+        //yield* cursorJumpAnimation();
+        yield* targetLine(1,0.6);
+        yield* targetLine(2,0.6);
+        yield* targetLine(3,0.6);
+    });
+
+
+    yield* waitFor(10);
 
 });
+

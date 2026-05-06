@@ -26,6 +26,8 @@ export function CodeCursor({
                 closed
                 layout={false}
                 lineJoin={'round'}
+                stroke={'#fbff00'}
+                lineWidth={4}
                 points={() => {
                     const size = refs.size();
                     const halfHeight = size / 2;
@@ -55,8 +57,14 @@ export function CodeCursor({
                         [-halfWidth * 0.73 + offsetX, -halfHeight + offsetY],
                     ];
                 }}
-                {...props}
                 ref={makeRef(refs, 'arrow')}
+            />
+            <Circle
+                size={10}
+                opacity={1}
+                x={-1.5}
+                fill={'#ff0000'}
+                ref={makeRef(refs, 'dot')}
             />
         </Layout>
     );
