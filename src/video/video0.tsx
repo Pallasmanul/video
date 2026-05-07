@@ -296,27 +296,26 @@ export default makeScene2D(function* (view) {
             layout={false}
         />
     );
+    codecursorref.dot.opacity(0);
 
     // 创建指针跳转动画函数
     function* cursorJumpAnimation() {
         const targetLines = [1, 2, 3]; // 指针跳转的行序列
 
         for (const line of targetLines) {
-            yield* tween(0.5, (value) => {
+            yield* tween(0.2, (value) => {
                 const easedValue = easeInOutCubic(value);
                 const current = targetLine();
                 const next = line;
                 targetLine(Math.round(current + (next - current) * easedValue));
             });
         }
+        targetLine(1);
     }
 
-//    创建循环动画
+    //    创建循环动画
     yield loop(function* () {
-        //yield* cursorJumpAnimation();
-        yield* targetLine(1,0.6);
-        yield* targetLine(2,0.6);
-        yield* targetLine(3,0.6);
+        yield* cursorJumpAnimation();
     });
 
 
