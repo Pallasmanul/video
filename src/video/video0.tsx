@@ -138,16 +138,26 @@ export default makeScene2D(function* (view) {
     //     yield* pageRef.code.code.append("\n" + func, 0.1);
     // }
 
-    const pageRefs = [
-        createPageRef(),
-        createPageRef(),
-        createPageRef(),
-        createPageRef(),
-        createPageRef(),
-        createPageRef(),
-        createPageRef(),
-        createPageRef(),
+  const pageRefs = [
+        createRef<Rect>(),
+        createRef<Rect>(),
+        createRef<Rect>(),
+        createRef<Rect>(),
+        createRef<Rect>(),
+        createRef<Rect>(),
+        createRef<Rect>(),
+        createRef<Rect>(),
     ];
+   const codeRefs = [
+        createRef<Code>(),
+        createRef<Code>(),
+        createRef<Code>(),
+        createRef<Code>(),
+        createRef<Code>(),
+        createRef<Code>(),
+        createRef<Code>(),
+        createRef<Code>(),
+    ];    
 
     // 布局参数, 起点 + 间隔
     const startX = -600;
@@ -180,34 +190,40 @@ export default makeScene2D(function* (view) {
     for (let i = 0; i < pagesData.length; i++) {
         const { label, pos } = pagesData[i];
         view.add(
-            <Page
-                refs={pageRefs[i]}
+            <Container
                 label={label}
-                opacity={0}
-                theme={{
-                    bg: '#1e1e1e',
-                    bgDark: '#0f0d0c',
-                    radius: 16,
-                }}
-                height={340}
+                ref={pageRefs[i]}
+                fill={'#1e1e1e'}
+                clip
+                children={
+                    <PyCode
+                        lineHeight={'150%'}
+                        offset={-1}
+                        code={""}
+                        ref={codeRefs[i]}
+                        opacity={1}
+                    />
+                }
                 width={350}
-                component={PyCode}
-                code={""}
+                height={380}
+                radius={16}
                 x={pos.x}
                 y={pos.y}
+                opacity={0}
             >
-            </Page>
+            </Container>
         );
     }
 
     //依次显示每个页面
     for (let i = 0; i < pagesData.length; i++) {
-        const ref = pageRefs[i];
+        const codeRef = codeRefs[i];
+        const rectRef = pageRefs[i];
         const data = pagesData[i].data;
         for (const func of data.split(" ")) {
-            yield* ref.code.code.append("\n" + func, 0.1);
+            yield* codeRef().code.append("\n" + func, 0.1);
         }
-        yield* ref.rect.opacity(1, 0.2);
+        yield* rectRef().opacity(1, 0.2);
     }
 
     yield* waitUntil('click');
@@ -215,27 +231,27 @@ export default makeScene2D(function* (view) {
     // 只显示第一个组件，让其 y 轴扩大，其他组件消失
     yield* all(
         // 第一个组件（数学内置函数）y轴放大
-        pageRefs[0].rect.height(680, 0.8, easeInOutCubic), // 高度也相应增加
-        pageRefs[0].rect.x(-view.width() / 4 - 80, 0.8, easeInOutCubic),
-        pageRefs[0].rect.y(0, 0.8, easeInOutCubic),
+        pageRefs[0]().height(680, 0.8, easeInOutCubic), // 高度也相应增加
+        pageRefs[0]().x(-view.width() / 4 - 80, 0.8, easeInOutCubic),
+        pageRefs[0]().y(0, 0.8, easeInOutCubic),
         // 其他组件透明度变为0
-        pageRefs[1].rect.opacity(0, 0.6),
-        pageRefs[2].rect.opacity(0, 0.6),
-        pageRefs[3].rect.opacity(0, 0.6),
-        pageRefs[4].rect.opacity(0, 0.6),
-        pageRefs[5].rect.opacity(0, 0.6),
-        pageRefs[6].rect.opacity(0, 0.6),
-        pageRefs[7].rect.opacity(0, 0.6),
+        pageRefs[1]().opacity(0, 0.6),
+        pageRefs[2]().opacity(0, 0.6),
+        pageRefs[3]().opacity(0, 0.6),
+        pageRefs[4]().opacity(0, 0.6),
+        pageRefs[5]().opacity(0, 0.6),
+        pageRefs[6]().opacity(0, 0.6),
+        pageRefs[7]().opacity(0, 0.6),
     );
 
     for (let i = 1; i < pageRefs.length; i++) {
-        pageRefs[i].rect.height(680);
-        pageRefs[i].rect.x(-view.width() / 4 - 80);
-        pageRefs[i].rect.y(0);
+        pageRefs[i]().height(680);
+        pageRefs[i]().x(-view.width() / 4 - 80);
+        pageRefs[i]().y(0);
     }
 
     yield* waitFor(0.8);
-    yield* pageRefs[0].code.selection(lines(1), 0.6);
+    yield* codeRefs[0]().selection(lines(1), 0.6);
 
     // for (let i = 1; i < pageRefs.length; i++) {
     //     yield* pageRefs[i].rect.opacity(1, 0.6);
@@ -263,7 +279,7 @@ export default makeScene2D(function* (view) {
                 width={800}
                 x={view.width() / 4 - 100}
                 component={PyCode}
-                code={"int x=-10 \nprintf(abs(x)) \n  "}
+                code={"int x=-10 \nprintf(abs(x)) \n \nbreakpoint() \n "}
             >
             </Page>
 
@@ -292,7 +308,7 @@ export default makeScene2D(function* (view) {
                 const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
                 return pageRef.code.localToWorld().transformPoint(pointBBox().position)
             }}
-            offset={[2, -2]}
+            offset={[7, -2]}
             layout={false}
         />
     );
@@ -300,15 +316,18 @@ export default makeScene2D(function* (view) {
 
     // 创建指针跳转动画函数
     function* cursorJumpAnimation() {
-        const targetLines = [1, 2, 3]; // 指针跳转的行序列
+        const targetRanges = [[1, 5]]; // 指针跳转的行序列
 
-        for (const line of targetLines) {
-            yield* tween(0.2, (value) => {
-                const easedValue = easeInOutCubic(value);
-                const current = targetLine();
-                const next = line;
-                targetLine(Math.round(current + (next - current) * easedValue));
-            });
+        for (const [start, end] of targetRanges) {
+            // 遍历当前范围内的每一行
+            for (let line = start; line <= end; line++) {
+                yield* tween(0.2, (value) => {
+                    const easedValue = easeInOutCubic(value);
+                    const current = targetLine();
+                    const next = line;
+                    targetLine(Math.round(current + (next - current) * easedValue));
+                });
+            }
         }
         targetLine(1);
     }

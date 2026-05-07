@@ -10,14 +10,16 @@ import {
   Txt,
 } from '@motion-canvas/2d';
 import {
+  createComputed,
   createSignal,
   makeRef,
   makeRefs,
+  range,
   SignalValue,
   SimpleSignal,
 } from '@motion-canvas/core';
 import {ATxt} from './ATxt';
-import {RSCode} from './Code';
+import {PlainCode, RSCode} from './Code';
 
 export function createPageRef() {
   return makeRefs<typeof Page>();
@@ -54,6 +56,13 @@ export function Page({
   refs.scroll = createSignal(0);
   const CodeComponent = component;
 
+  // 根据 code 行数生成行号
+  const lineNumbers = createComputed(() => {
+    const codeStr = String(code);
+    const lines = codeStr.split('\n').length;
+    return Array.from({length: lines}, (_, i) => (i + 1).toString().padStart(3, ' ') + ' ').join('\n');
+  });
+  
   return (
     <Rect
       fill={theme.bg}
@@ -73,7 +82,7 @@ export function Page({
         </Layout>
         <Rect fill={theme.bgDark} height={8} shrink={0} margin={[40, -40]} />
         <Rect grow={1} clip ref={makeRef(refs, 'inner')}>
-          <Layout layout={false} position={() => refs.inner.size().scale(-0.5)}>
+          {/* <Layout layout={false} position={() => refs.inner.size().scale(-0.5)}>
             <CodeComponent
               ref={makeRef(refs, 'code')}
               offset={-1}
@@ -81,7 +90,20 @@ export function Page({
               lineHeight={lineHeight}
               code={code}
             />
-          </Layout>
+          </Layout> */}
+            <PlainCode
+              fill={'#666'}
+              fontWeight={700}
+              offset={-1}
+              code={lineNumbers}
+            />          
+            <CodeComponent
+              ref={makeRef(refs, 'code')}
+              offset={-1}
+              y={refs.scroll}
+              lineHeight={lineHeight}
+              code={code}
+            />          
         </Rect>
       </Node>
     </Rect>
