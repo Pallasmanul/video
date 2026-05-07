@@ -1,5 +1,5 @@
 import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path } from '@motion-canvas/2d';
-import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween } from '@motion-canvas/core';
+import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCursor, createCodeCursorRef, PyCode } from '../components';
 import { BoxGeometry } from 'three';
 import { CodeTerminal, createCodeTerminalRef } from '../components/CodeTerminal';
@@ -109,6 +109,8 @@ export default makeScene2D(function* (view) {
 
     yield* groupRef().opacity(0, 0.6);
 
+    groupRef().remove();
+    logoRef().remove();
 
 
     // const pageRef = createPageRef()
@@ -138,7 +140,7 @@ export default makeScene2D(function* (view) {
     //     yield* pageRef.code.code.append("\n" + func, 0.1);
     // }
 
-  const pageRefs = [
+    const pageRefs = [
         createRef<Rect>(),
         createRef<Rect>(),
         createRef<Rect>(),
@@ -148,7 +150,7 @@ export default makeScene2D(function* (view) {
         createRef<Rect>(),
         createRef<Rect>(),
     ];
-   const codeRefs = [
+    const codeRefs = [
         createRef<Code>(),
         createRef<Code>(),
         createRef<Code>(),
@@ -157,13 +159,13 @@ export default makeScene2D(function* (view) {
         createRef<Code>(),
         createRef<Code>(),
         createRef<Code>(),
-    ];    
+    ];
 
     // 布局参数, 起点 + 间隔
     const startX = -600;
-    const startY = -200;
+    const startY = -240;
     const gapX = 400;
-    const gapY = 380;
+    const gapY = 459;
     const itemsPerRow = 4;
 
 
@@ -221,7 +223,7 @@ export default makeScene2D(function* (view) {
         const rectRef = pageRefs[i];
         const data = pagesData[i].data;
         for (const func of data.split(" ")) {
-            yield* codeRef().code.append("\n" + func, 0.1);
+            codeRef().code.append("\n" + func);
         }
         yield* rectRef().opacity(1, 0.2);
     }
@@ -259,13 +261,10 @@ export default makeScene2D(function* (view) {
     // }
 
 
-    yield* waitFor(2);
-
-
     const pageRef = createPageRef();
     const codecursorref = createCodeCursorRef();
     view.add(
-        <>w
+        <>
             <Page
                 refs={pageRef}
                 label="main.py"
@@ -278,6 +277,7 @@ export default makeScene2D(function* (view) {
                 height={900}
                 width={800}
                 x={view.width() / 4 - 100}
+                y={0}
                 component={PyCode}
                 code={"int x=-10 \nprintf(abs(x)) \n \nbreakpoint() \n "}
             >
@@ -299,6 +299,8 @@ export default makeScene2D(function* (view) {
     }
     );
 
+    yield* waitUntil('click2');
+
     view.add(
         <CodeCursor
             refs={codecursorref}
@@ -313,6 +315,34 @@ export default makeScene2D(function* (view) {
         />
     );
     codecursorref.dot.opacity(0);
+
+
+    const codeTerminalRef = createCodeTerminalRef();
+    view.add(
+        <>
+            <CodeTerminal refs={codeTerminalRef} fill={'#1e1e1e'} opacity={0} width={pageRef.rect.width()} height={300} x={view.width() / 4 - 100} y={380} />
+        </>
+    )
+
+    yield* all(
+        codeTerminalRef.rect.opacity(1, 0.6),
+        pageRef.rect.y(-150, 0.6),
+        pageRef.rect.height(680, 0.6),
+    )
+
+    createEffect(() => {
+        const currentLine = targetLine();
+        // 模拟代码执行的终端输出
+        switch (currentLine) {
+            case 2:
+                spawn(function* () {
+                    yield* appendToCode("pallasmanul@~: 10", codeTerminalRef.code);
+                });
+                break;
+        }
+    });
+
+
 
     // 创建指针跳转动画函数
     function* cursorJumpAnimation() {
@@ -338,7 +368,25 @@ export default makeScene2D(function* (view) {
     });
 
 
-    yield* waitFor(10);
+    yield* waitUntil('click3');
 
+
+
+    // codeTerminalRef.code.code("pallasmanul@~: 10")
+    // yield* appendToCode("pallasmanul@~: 10", codeTerminalRef.code);
+
+
+    yield* waitFor(5);
+    // yield* pageRef.scroll(100, 1);
+    yield* codeTerminalRef.scroll(-100, 1);
+    //yield* codeTerminalRef.inner.y(1000, 1);
+    yield* waitFor(5);
 });
 
+function* appendToCode(
+    code_text: string,
+    code: typeof Code,
+) {
+    const previous = code.parsed();
+    yield* code.code.append(`${code_text}\n`, 0.1)
+}

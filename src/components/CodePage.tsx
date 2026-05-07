@@ -18,8 +18,8 @@ import {
   SignalValue,
   SimpleSignal,
 } from '@motion-canvas/core';
-import {ATxt} from './ATxt';
-import {PlainCode, RSCode} from './Code';
+import { ATxt } from './ATxt';
+import { PlainCode, RSCode } from './Code';
 
 export function createPageRef() {
   return makeRefs<typeof Page>();
@@ -60,9 +60,9 @@ export function Page({
   const lineNumbers = createComputed(() => {
     const codeStr = String(code);
     const lines = codeStr.split('\n').length;
-    return Array.from({length: lines}, (_, i) => (i + 1).toString().padStart(3, ' ') + ' ').join('\n');
+    return Array.from({ length: lines }, (_, i) => (i + 1).toString().padStart(3, ' ') + ' ').join('\n');
   });
-  
+
   return (
     <Rect
       fill={theme.bg}
@@ -82,28 +82,30 @@ export function Page({
         </Layout>
         <Rect fill={theme.bgDark} height={8} shrink={0} margin={[40, -40]} />
         <Rect grow={1} clip ref={makeRef(refs, 'inner')}>
-          {/* <Layout layout={false} position={() => refs.inner.size().scale(-0.5)}>
+          <Layout layout={false} position={() => refs.inner.size().scale(-0.5).add(refs.scroll())}>
+            <Layout direction={'row'} layout position={[150, 110]}>
+              <PlainCode
+                fill={'#666'}
+                fontWeight={700}
+                offset={-1}
+                code={lineNumbers}
+              />
+              <CodeComponent
+                ref={makeRef(refs, 'code')}
+                offset={-1}
+                lineHeight={lineHeight}
+                code={code}
+              />
+            </Layout>
+          </Layout>
+          {/* 
             <CodeComponent
               ref={makeRef(refs, 'code')}
               offset={-1}
               y={refs.scroll}
               lineHeight={lineHeight}
               code={code}
-            />
-          </Layout> */}
-            <PlainCode
-              fill={'#666'}
-              fontWeight={700}
-              offset={-1}
-              code={lineNumbers}
-            />          
-            <CodeComponent
-              ref={makeRef(refs, 'code')}
-              offset={-1}
-              y={refs.scroll}
-              lineHeight={lineHeight}
-              code={code}
-            />          
+            />           */}
         </Rect>
       </Node>
     </Rect>
