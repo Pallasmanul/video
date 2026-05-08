@@ -1,4 +1,4 @@
-import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path } from '@motion-canvas/2d';
+import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path, Layout } from '@motion-canvas/2d';
 import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCursor, createCodeCursorRef, PyCode } from '../components';
 import { BoxGeometry } from 'three';
@@ -22,7 +22,7 @@ const Debug_Build_Function = "memoryview() breakpoint()"
 
 export default makeScene2D(function* (view) {
 
-    view.fill('#4d4c4c')
+    view.fill('#2f2f2f')
     const groupRef = createRef<Rect>()
     const logoRef = createRef<Node>()
     const codeRef = createRef<Code>()
@@ -260,6 +260,22 @@ export default makeScene2D(function* (view) {
     //     yield* waitFor(1);
     // }
 
+    view.add(
+        createFunctionDoc(
+            'abs(x)',
+            '返回数字的绝对值',
+            'x (int/float): 需要计算绝对值的数字',
+            'int/float: x 的绝对值',
+            [
+                'abs(-10)  # 输出: 10',
+                'abs(3.14)  # 输出: 3.14',
+                'abs(-2.5)  # 输出: 2.5',
+            ]
+        )
+            .x(view.width() / 4 - 150)
+    )
+    
+    yield* waitUntil('ease');
 
     const pageRef = createPageRef();
     const codecursorref = createCodeCursorRef();
@@ -421,4 +437,106 @@ function* appendToCode(
 ) {
     const previous = code.parsed();
     yield* code.code.append(`${code_text}\n`, 0.1)
+}
+
+
+// 函数文档组件封装函数
+function createFunctionDoc(
+    functionName: string,
+    description: string,
+    parameters: string | string[],
+    returnValue: string,
+    examples: string[],
+) {
+    const params = Array.isArray(parameters) ? parameters : [parameters];
+
+    return (
+        <Paper
+            fill={'#202020'}
+            padding={20}
+            layout
+        >
+            <Layout direction={'column'} padding={24} gap={16}>
+                {/* 函数名称 */}
+                <ATxt
+                    fill={'#ff6b6b'}
+                    fontSize={36}
+                    fontWeight={700}
+                >
+                    {functionName}
+                </ATxt>
+
+                {/* 函数描述 */}
+                <ATxt
+                    fill={'#a0a0a0'}
+                    fontSize={18}
+                    lineHeight={1.5}
+                >
+                    {description}
+                </ATxt>
+
+                {/* 参数说明 */}
+                <Layout direction={'column'} gap={8}>
+                    <ATxt
+                        fill={'#4ecdc4'}
+                        fontSize={20}
+                        fontWeight={600}
+                    >
+                        参数:
+                    </ATxt>
+                    {params.map((param, index) => (
+                        <ATxt
+                            key={index}
+                            fill={'#ffd93d'}
+                            fontSize={16}
+                            lineHeight={1.5}
+                        >
+                            {param}
+                        </ATxt>
+                    ))}
+                </Layout>
+
+                {/* 返回值说明 */}
+                <Layout direction={'column'} gap={8}>
+                    <ATxt
+                        fill={'#4ecdc4'}
+                        fontSize={20}
+                        fontWeight={600}
+                    >
+                        返回值:
+                    </ATxt>
+                    <ATxt
+                        fill={'#6bcb77'}
+                        fontSize={16}
+                        lineHeight={1.5}
+                    >
+                        {returnValue}
+                    </ATxt>
+                </Layout>
+
+                {/* 使用示例 */}
+                <Layout direction={'column'} gap={8}>
+                    <ATxt
+                        fill={'#4ecdc4'}
+                        fontSize={20}
+                        fontWeight={600}
+                    >
+                        示例:
+                    </ATxt>
+                    <Rect fill={'#1a1a1a'} padding={12} radius={6} layout direction={'column'}>
+                        {examples.map((example, index) => (
+                            <ATxt
+                                key={index}
+                                fill={'#e0e0e0'}
+                                fontSize={14}
+                                lineHeight={1.6}
+                            >
+                                {example}
+                            </ATxt>
+                        ))}
+                    </Rect>
+                </Layout>
+            </Layout>
+        </Paper>
+    );
 }

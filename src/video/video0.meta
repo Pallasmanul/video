@@ -6,12 +6,16 @@
       "targetTime": 8.451596672445556
     },
     {
+      "name": "ease",
+      "targetTime": 13.396743051490242
+    },
+    {
       "name": "click2",
-      "targetTime": 13.167612709231413
+      "targetTime": 15.912759088276099
     },
     {
       "name": "click3",
-      "targetTime": 15.209260828845634
+      "targetTime": 17.95440720789032
     }
   ],
   "seed": 3949230891
