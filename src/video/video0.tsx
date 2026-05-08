@@ -263,6 +263,7 @@ export default makeScene2D(function* (view) {
 
     const pageRef = createPageRef();
     const codecursorref = createCodeCursorRef();
+    const highlightLine = createRef<Rect>();
     view.add(
         <>
             <Page
@@ -279,9 +280,10 @@ export default makeScene2D(function* (view) {
                 x={view.width() / 4 - 100}
                 y={0}
                 component={PyCode}
-                code={"int x=-10 \nprintf(abs(x)) \n \nbreakpoint() \n "}
+                code={"int x=-10 \nprintf(abs(x)) \n \nbreakpoint() \n  "}
             >
             </Page>
+
 
         </>
     )
@@ -299,25 +301,57 @@ export default makeScene2D(function* (view) {
     }
     );
 
+    // 计算高亮矩形的位置和大小
+    const highlightRectProps = createComputed(() => {
+        const line = targetLine();
+        // 使用 getPointBBox 获取当前行开头的位置
+        const pointBBox = pageRef.code.getPointBBox([line, 0]);
+        const worldPos = pageRef.code.localToWorld().transformPoint(pointBBox.position);
+        // 基于 Page 组件的 lineHeight='150%' 和字体大小计算行高
+        const baseFontSize = 24;
+        const lineHeight = baseFontSize * 1.5; // 150% 的行高
+        return {
+            position: worldPos,
+            width: pageRef.rect.width() - 160,
+            height: lineHeight,
+        };
+    });
+
+
     yield* waitUntil('click2');
 
     view.add(
-        <CodeCursor
-            refs={codecursorref}
-            absolutePosition={() => {
-                const line = targetLine();
-                // 使用 getPointBBox 获取特定位置的边界框
-                const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
-                return pageRef.code.localToWorld().transformPoint(pointBBox().position)
-            }}
-            offset={[7, -2]}
-            layout={false}
-        />
+        <>
+            <CodeCursor
+                refs={codecursorref}
+                absolutePosition={() => {
+                    const line = targetLine();
+                    // 使用 getPointBBox 获取特定位置的边界框
+                    const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
+                    return pageRef.code.localToWorld().transformPoint(pointBBox().position)
+                }}
+                offset={[7, -2]}
+                layout={false}
+            />
+            {/* 行背景高亮矩形 */}
+            <Rect
+                ref={highlightLine}
+                stroke="#515151"
+                lineWidth={2}
+                opacity={1}
+                absolutePosition={() => highlightRectProps().position}
+                width={() => highlightRectProps().width}
+                height={() => highlightRectProps().height}
+                offset={[-1, -1]}
+                layout={false}
+            />
+        </>
     );
     codecursorref.dot.opacity(0);
 
 
     const codeTerminalRef = createCodeTerminalRef();
+
     view.add(
         <>
             <CodeTerminal refs={codeTerminalRef} fill={'#1e1e1e'} opacity={0} width={pageRef.rect.width()} height={300} x={view.width() / 4 - 100} y={380} />
@@ -341,8 +375,6 @@ export default makeScene2D(function* (view) {
                 break;
         }
     });
-
-
 
     // 创建指针跳转动画函数
     function* cursorJumpAnimation() {
