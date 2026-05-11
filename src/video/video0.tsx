@@ -1,9 +1,10 @@
-import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path, Layout } from '@motion-canvas/2d';
-import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn } from '@motion-canvas/core';
+import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path, Layout, Txt } from '@motion-canvas/2d';
+import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn, makeRefs } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCursor, createCodeCursorRef, PyCode } from '../components';
 import { BoxGeometry } from 'three';
 import { CodeTerminal, createCodeTerminalRef } from '../components/CodeTerminal';
 import { reveal } from '../components/Utils';
+import { FunctionDoc, createFunctionDocRef } from '../components/FunctionDoc';
 
 const Python_Buildin_Function = "abs() ailter() all() anext() any() ascii() bin() bool() breakpoint() bytearray() bytes() callback() chr() classmethod() compile() complex() delattr() dict() dir() divmod() \
 enumerate() eval() exec() filter() float() format() frozenset() getattr() globals() hasattr() hash() help() hex() id() input() int() isinstance() issubclass() iter() \
@@ -253,30 +254,61 @@ export default makeScene2D(function* (view) {
     }
 
     yield* waitFor(0.8);
+    yield* pageRefs[0]().height(200, 0.6);
     yield* codeRefs[0]().selection(lines(1), 0.6);
+
+
+    view.add(
+        <>
+            <Rect fill={'#1e1e1e'} opacity={1} width={350} height={200} radius={16} x={-view.width() / 4 - 180} y={- view.height() / 4 - 90} direction={'column'}
+                padding={40}
+                gap={20}
+                layout>
+                <Txt
+                    lineHeight={60}
+                    marginTop={-20}
+                    fontFamily={'JetBrains Mono'}
+                    fontWeight={700}
+                    fontSize={28}
+                    fill={'rgba(255, 255, 255, 0.54)'}
+                >
+                    {"数学内置函数"}
+                </Txt>
+                <PyCode
+                    lineHeight={'150%'}
+                    offset={-1}
+                    code={"abs()"}
+                    opacity={1}
+                    scale={1.35}
+                />
+            </Rect>
+        </>
+    )
+
 
     // for (let i = 1; i < pageRefs.length; i++) {
     //     yield* pageRefs[i].rect.opacity(1, 0.6);
     //     yield* waitFor(1);
     // }
 
+    const docRef = createFunctionDocRef();
+
     view.add(
-        createFunctionDoc(
-            'abs(x)',
-            '返回数字的绝对值',
-            'x (int/float): 需要计算绝对值的数字',
-            'int/float: x 的绝对值',
-            [
+        <FunctionDoc
+            refs={docRef}
+            functionName="abs(x)"
+            description="返回数字的绝对值"
+            parameters="x (int/float): 需要计算绝对值的数字"
+            returnValue="int/float: x 的绝对值"
+            examples={[
                 'abs(-10)  # 输出: 10',
                 'abs(3.14)  # 输出: 3.14',
                 'abs(-2.5)  # 输出: 2.5',
-            ]
-        )
-            .x(view.width() / 4 - 150)
-    )
+            ]}
+            x={view.width() / 4 - 150}
+        />
+    );
     
-    yield* waitUntil('ease');
-
     const pageRef = createPageRef();
     const codecursorref = createCodeCursorRef();
     const highlightLine = createRef<Rect>();
@@ -285,24 +317,41 @@ export default makeScene2D(function* (view) {
             <Page
                 refs={pageRef}
                 label="main.py"
-                opacity={1}
+                opacity={0}
                 theme={{
                     bg: '#1e1e1e',
                     bgDark: '#0f0d0c',
                     radius: 16,
                 }}
                 height={900}
-                width={800}
-                x={view.width() / 4 - 100}
+                width={500}
+                x={view.width() / 4}
                 y={0}
                 component={PyCode}
                 code={"int x=-10 \nprintf(abs(x)) \n \nbreakpoint() \n  "}
             >
             </Page>
-
-
         </>
     )
+
+    const codeTerminalRef = createCodeTerminalRef();
+
+    view.add(
+        <>
+            <CodeTerminal refs={codeTerminalRef} fill={'#1e1e1e'} opacity={0} width={pageRef.rect.width()} height={300} x={pageRef.rect.x()} y={380} />
+        </>
+    )
+
+
+    yield* waitUntil('ease');
+    yield* all(
+        docRef.rect.x(0, 0.8, easeInOutCubic),
+        pageRef.rect.opacity(1, 0.6),
+
+    )
+
+
+
 
     // 获取代码第 2 行（索引为 1）开头的位置
     const targetLine = createSignal(1)
@@ -366,19 +415,6 @@ export default makeScene2D(function* (view) {
     codecursorref.dot.opacity(0);
 
 
-    const codeTerminalRef = createCodeTerminalRef();
-
-    view.add(
-        <>
-            <CodeTerminal refs={codeTerminalRef} fill={'#1e1e1e'} opacity={0} width={pageRef.rect.width()} height={300} x={view.width() / 4 - 100} y={380} />
-        </>
-    )
-
-    yield* all(
-        codeTerminalRef.rect.opacity(1, 0.6),
-        pageRef.rect.y(-150, 0.6),
-        pageRef.rect.height(680, 0.6),
-    )
 
     createEffect(() => {
         const currentLine = targetLine();
@@ -420,14 +456,8 @@ export default makeScene2D(function* (view) {
 
 
 
-    // codeTerminalRef.code.code("pallasmanul@~: 10")
-    // yield* appendToCode("pallasmanul@~: 10", codeTerminalRef.code);
-
-
     yield* waitFor(5);
-    // yield* pageRef.scroll(100, 1);
     yield* codeTerminalRef.scroll(-100, 1);
-    //yield* codeTerminalRef.inner.y(1000, 1);
     yield* waitFor(5);
 });
 
@@ -437,106 +467,4 @@ function* appendToCode(
 ) {
     const previous = code.parsed();
     yield* code.code.append(`${code_text}\n`, 0.1)
-}
-
-
-// 函数文档组件封装函数
-function createFunctionDoc(
-    functionName: string,
-    description: string,
-    parameters: string | string[],
-    returnValue: string,
-    examples: string[],
-) {
-    const params = Array.isArray(parameters) ? parameters : [parameters];
-
-    return (
-        <Paper
-            fill={'#202020'}
-            padding={20}
-            layout
-        >
-            <Layout direction={'column'} padding={24} gap={16}>
-                {/* 函数名称 */}
-                <ATxt
-                    fill={'#ff6b6b'}
-                    fontSize={36}
-                    fontWeight={700}
-                >
-                    {functionName}
-                </ATxt>
-
-                {/* 函数描述 */}
-                <ATxt
-                    fill={'#a0a0a0'}
-                    fontSize={18}
-                    lineHeight={1.5}
-                >
-                    {description}
-                </ATxt>
-
-                {/* 参数说明 */}
-                <Layout direction={'column'} gap={8}>
-                    <ATxt
-                        fill={'#4ecdc4'}
-                        fontSize={20}
-                        fontWeight={600}
-                    >
-                        参数:
-                    </ATxt>
-                    {params.map((param, index) => (
-                        <ATxt
-                            key={index}
-                            fill={'#ffd93d'}
-                            fontSize={16}
-                            lineHeight={1.5}
-                        >
-                            {param}
-                        </ATxt>
-                    ))}
-                </Layout>
-
-                {/* 返回值说明 */}
-                <Layout direction={'column'} gap={8}>
-                    <ATxt
-                        fill={'#4ecdc4'}
-                        fontSize={20}
-                        fontWeight={600}
-                    >
-                        返回值:
-                    </ATxt>
-                    <ATxt
-                        fill={'#6bcb77'}
-                        fontSize={16}
-                        lineHeight={1.5}
-                    >
-                        {returnValue}
-                    </ATxt>
-                </Layout>
-
-                {/* 使用示例 */}
-                <Layout direction={'column'} gap={8}>
-                    <ATxt
-                        fill={'#4ecdc4'}
-                        fontSize={20}
-                        fontWeight={600}
-                    >
-                        示例:
-                    </ATxt>
-                    <Rect fill={'#1a1a1a'} padding={12} radius={6} layout direction={'column'}>
-                        {examples.map((example, index) => (
-                            <ATxt
-                                key={index}
-                                fill={'#e0e0e0'}
-                                fontSize={14}
-                                lineHeight={1.6}
-                            >
-                                {example}
-                            </ATxt>
-                        ))}
-                    </Rect>
-                </Layout>
-            </Layout>
-        </Paper>
-    );
 }
