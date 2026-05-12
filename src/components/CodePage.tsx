@@ -17,6 +17,7 @@ import {
   range,
   SignalValue,
   SimpleSignal,
+  Vector2,
 } from '@motion-canvas/core';
 import { ATxt } from './ATxt';
 import { PlainCode, RSCode } from './Code';
@@ -82,8 +83,22 @@ export function Page({
         </Layout>
         <Rect fill={theme.bgDark} height={8} shrink={0} margin={[40, -40]} />
         <Rect grow={1} clip ref={makeRef(refs, 'inner')}>
-          <Layout layout={false} position={() => refs.inner.size().scale(-0.5).add(refs.scroll())}>
-            <Layout direction={'row'} layout position={[150, 110]}>
+          <Layout layout={false} position={() => {
+            const innerSize = refs.inner.size();
+            const codeSize = refs.code.size();
+            const codeOffsetY = 0; // 内层 Layout 的固定 y 偏移
+
+            // 水平方向始终居中
+            const x = -innerSize.x / 2 + 150;
+
+           // 垂直方向：始终靠近上边对齐（加上 codeOffsetY 偏移）
+            // 代码中心位置 = 顶部位置 + codeSize.y/2
+            // 顶部位置 = -innerSize.y/2 + codeOffsetY
+            let y = -innerSize.y / 2 + codeOffsetY + codeSize.y / 2 - refs.scroll();
+            
+            return new Vector2(x, y);
+          }}>
+            <Layout direction={'row'} layout>
               <PlainCode
                 fill={'#666'}
                 fontWeight={700}

@@ -235,7 +235,7 @@ export default makeScene2D(function* (view) {
     yield* all(
         // 第一个组件（数学内置函数）y轴放大
         pageRefs[0]().height(680, 0.8, easeInOutCubic), // 高度也相应增加
-        pageRefs[0]().x(-view.width() / 4 - 80, 0.8, easeInOutCubic),
+        pageRefs[0]().x(-view.width() / 4, 0.8, easeInOutCubic),
         pageRefs[0]().y(0, 0.8, easeInOutCubic),
         // 其他组件透明度变为0
         pageRefs[1]().opacity(0, 0.6),
@@ -253,14 +253,12 @@ export default makeScene2D(function* (view) {
         pageRefs[i]().y(0);
     }
 
-    yield* waitFor(0.8);
-    yield* pageRefs[0]().height(200, 0.6);
-    yield* codeRefs[0]().selection(lines(1), 0.6);
 
-
+    const function_container_ref = createRef<Rect>();
+    
     view.add(
         <>
-            <Rect fill={'#1e1e1e'} opacity={1} width={350} height={200} radius={16} x={-view.width() / 4 - 180} y={- view.height() / 4 - 90} direction={'column'}
+            <Rect fill={'#1e1e1e'} opacity={0} width={400} height={200} radius={16} x={-view.width() / 4} y={- view.height() / 4 - 90} direction={'column'} ref={function_container_ref}  
                 padding={40}
                 gap={20}
                 layout>
@@ -285,7 +283,18 @@ export default makeScene2D(function* (view) {
         </>
     )
 
+    yield* waitFor(0.8);
+    //yield* pageRefs[0]().height(200, 0.6);
+    //yield* codeRefs[0]().selection(lines(1), 0.6);
 
+    yield* all(
+        pageRefs[0]().x(-view.width() / 4, 0.6, easeInOutCubic),
+        pageRefs[0]().y(-view.height() / 4 - 90, 0.6, easeInOutCubic),
+        pageRefs[0]().size(function_container_ref().size, 0.6),
+        pageRefs[0]().opacity(0, 0.6),
+        function_container_ref().opacity(1, 0.6),
+    );
+    
     // for (let i = 1; i < pageRefs.length; i++) {
     //     yield* pageRefs[i].rect.opacity(1, 0.6);
     //     yield* waitFor(1);
@@ -305,7 +314,10 @@ export default makeScene2D(function* (view) {
                 'abs(3.14)  # 输出: 3.14',
                 'abs(-2.5)  # 输出: 2.5',
             ]}
-            x={view.width() / 4 - 150}
+            x={- view.width() / 4}
+            y={view.height() / 4 - 160}
+            width={400}
+            radius={16}
         />
     );
     
@@ -324,11 +336,11 @@ export default makeScene2D(function* (view) {
                     radius: 16,
                 }}
                 height={900}
-                width={500}
-                x={view.width() / 4}
-                y={0}
+                width={800}
+                x={view.width() / 4 + 900}
+                y={-10}
                 component={PyCode}
-                code={"int x=-10 \nprintf(abs(x)) \n \nbreakpoint() \n  "}
+                code={"int x=-10 \nprintf(abs(x)) \n "}
             >
             </Page>
         </>
@@ -338,16 +350,17 @@ export default makeScene2D(function* (view) {
 
     view.add(
         <>
-            <CodeTerminal refs={codeTerminalRef} fill={'#1e1e1e'} opacity={0} width={pageRef.rect.width()} height={300} x={pageRef.rect.x()} y={380} />
+            <CodeTerminal refs={codeTerminalRef} fill={'#1e1e1e'} opacity={0} width={pageRef.rect.width()} height={300} x={pageRef.rect.x()} y={280} />
         </>
     )
 
-
+    pageRef.scroll(0);
     yield* waitUntil('ease');
     yield* all(
-        docRef.rect.x(0, 0.8, easeInOutCubic),
+        pageRef.rect.x(view.width() / 4 - 80, 0.8, easeInOutCubic),
+        codeTerminalRef.rect.x(view.width() / 4 - 80, 0.8, easeInOutCubic),
         pageRef.rect.opacity(1, 0.6),
-
+        codeTerminalRef.rect.opacity(1, 0.6),
     )
 
 
@@ -430,7 +443,7 @@ export default makeScene2D(function* (view) {
 
     // 创建指针跳转动画函数
     function* cursorJumpAnimation() {
-        const targetRanges = [[1, 5]]; // 指针跳转的行序列
+        const targetRanges = [[1, 3]]; // 指针跳转的行序列
 
         for (const [start, end] of targetRanges) {
             // 遍历当前范围内的每一行
@@ -453,12 +466,11 @@ export default makeScene2D(function* (view) {
 
 
     yield* waitUntil('click3');
-
-
-
+    yield* codeTerminalRef.scroll(-200, 1);
     yield* waitFor(5);
-    yield* codeTerminalRef.scroll(-100, 1);
-    yield* waitFor(5);
+
+    
+
 });
 
 function* appendToCode(
