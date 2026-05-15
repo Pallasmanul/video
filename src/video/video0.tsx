@@ -110,8 +110,7 @@ export default makeScene2D(function* (view) {
 
     yield* groupRef().opacity(0, 0.6);
 
-    groupRef().remove();
-    logoRef().remove();
+
 
 
     // const pageRef = createPageRef()
@@ -231,6 +230,8 @@ export default makeScene2D(function* (view) {
 
     yield* waitUntil('click');
 
+    
+
     // 只显示第一个组件，让其 y 轴扩大，其他组件消失
     yield* all(
         // 第一个组件（数学内置函数）y轴放大
@@ -255,10 +256,10 @@ export default makeScene2D(function* (view) {
 
 
     const function_container_ref = createRef<Rect>();
-    
+
     view.add(
         <>
-            <Rect fill={'#1e1e1e'} opacity={0} width={400} height={200} radius={16} x={-view.width() / 4} y={- view.height() / 4 - 90} direction={'column'} ref={function_container_ref}  
+            <Rect fill={'#1e1e1e'} opacity={0} width={400} height={200} radius={16} x={-view.width() / 4} y={- view.height() / 4 - 90} direction={'column'} ref={function_container_ref}
                 padding={40}
                 gap={20}
                 layout>
@@ -283,23 +284,6 @@ export default makeScene2D(function* (view) {
         </>
     )
 
-    yield* waitFor(0.8);
-    //yield* pageRefs[0]().height(200, 0.6);
-    //yield* codeRefs[0]().selection(lines(1), 0.6);
-
-    yield* all(
-        pageRefs[0]().x(-view.width() / 4, 0.6, easeInOutCubic),
-        pageRefs[0]().y(-view.height() / 4 - 90, 0.6, easeInOutCubic),
-        pageRefs[0]().size(function_container_ref().size, 0.6),
-        pageRefs[0]().opacity(0, 0.6),
-        function_container_ref().opacity(1, 0.6),
-    );
-    
-    // for (let i = 1; i < pageRefs.length; i++) {
-    //     yield* pageRefs[i].rect.opacity(1, 0.6);
-    //     yield* waitFor(1);
-    // }
-
     const docRef = createFunctionDocRef();
 
     view.add(
@@ -318,9 +302,32 @@ export default makeScene2D(function* (view) {
             y={view.height() / 4 - 160}
             width={400}
             radius={16}
+            opacity={0}
         />
     );
-    
+
+
+    yield* waitFor(0.8);
+
+    yield* sequence(
+        0.2,
+        all(
+            pageRefs[0]().x(-view.width() / 4, 0.6, easeInOutCubic),
+            pageRefs[0]().y(-view.height() / 4 - 90, 0.6, easeInOutCubic),
+            pageRefs[0]().size(function_container_ref().size, 0.6),
+            pageRefs[0]().opacity(0, 0.6),
+            function_container_ref().opacity(1, 0.6),
+        ),
+        docRef.rect.opacity(1, 0.6),
+    )
+
+
+    // for (let i = 1; i < pageRefs.length; i++) {
+    //     yield* pageRefs[i].rect.opacity(1, 0.6);
+    //     yield* waitFor(1);
+    // }
+
+
     const pageRef = createPageRef();
     const codecursorref = createCodeCursorRef();
     const highlightLine = createRef<Rect>();
@@ -469,7 +476,7 @@ export default makeScene2D(function* (view) {
     yield* codeTerminalRef.scroll(-200, 1);
     yield* waitFor(5);
 
-    
+
 
 });
 
