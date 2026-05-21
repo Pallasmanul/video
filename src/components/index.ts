@@ -11,3 +11,5 @@ export * from './Container';
 export * from './CodeDebugBar';
 export * from './FileBar';
 export * from './CodeCursor';
+export * from './LibDoc';
+export * from './FunctionDoc';

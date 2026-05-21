@@ -1,5 +1,5 @@
 import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path, Layout, Txt } from '@motion-canvas/2d';
-import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn, makeRefs } from '@motion-canvas/core';
+import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn, makeRefs, useRandom } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCursor, createCodeCursorRef, PyCode } from '../components';
 import { BoxGeometry } from 'three';
 import { CodeTerminal, createCodeTerminalRef } from '../components/CodeTerminal';
@@ -223,14 +223,14 @@ export default makeScene2D(function* (view) {
         const rectRef = pageRefs[i];
         const data = pagesData[i].data;
         for (const func of data.split(" ")) {
-            codeRef().code.append("\n" + func);
+            yield* codeRef().code.append("\n" + func, 0.1);
         }
         yield* rectRef().opacity(1, 0.2);
     }
 
     yield* waitUntil('click');
 
-    
+
 
     // 只显示第一个组件，让其 y 轴扩大，其他组件消失
     yield* all(
@@ -370,7 +370,33 @@ export default makeScene2D(function* (view) {
         codeTerminalRef.rect.opacity(1, 0.6),
     )
 
+    const function_acontainer_ref = createRef<Rect>();
+    const txtRefs = createRefArray<Txt>();
 
+    view.add(
+        <>
+            <Rect opacity={1} width={200} radius={16} x={-view.width() / 2 + 120} direction={'column'} ref={function_acontainer_ref}
+                padding={30}
+                gap={20}
+                alignItems={'center'}
+                layout>
+                {Numeric_Math_Buildin_Function.split(" ").map((func, index) => (
+                    <Txt
+                        lineHeight={80}
+                        fontFamily={'JetBrains Mono'}
+                        fontSize={36}
+                        fontStyle={'Bold'}
+                        fill={'#444444'}
+                        ref={txtRefs}
+                    >
+                        {func}
+                    </Txt>
+                ))}
+            </Rect>
+        </>
+    )
+
+    yield* txtRefs[0].fill('#d9d9d9',0);
 
 
     // 获取代码第 2 行（索引为 1）开头的位置
@@ -432,7 +458,7 @@ export default makeScene2D(function* (view) {
             />
         </>
     );
-    codecursorref.dot.opacity(0);
+    yield* codecursorref.dot.opacity(0,0);
 
 
 
@@ -474,7 +500,16 @@ export default makeScene2D(function* (view) {
 
     yield* waitUntil('click3');
     yield* codeTerminalRef.scroll(-200, 1);
-    yield* waitFor(5);
+    yield* waitUntil('click4');
+
+    // 逐字符输入代码
+    yield* typeCodeEffect(pageRef.code, 'x = -10', codecursorref);
+    yield* pageRef.code.code.append('\n', 0);
+    yield* waitFor(0.2);
+    yield* typeCodeEffect(pageRef.code, 'result = abs(x)', codecursorref);
+    yield* pageRef.code.code.append('\n', 0);
+    yield* waitFor(0.2);
+    yield* typeCodeEffect(pageRef.code, 'print(result)', codecursorref);
 
 
 
@@ -486,4 +521,35 @@ function* appendToCode(
 ) {
     const previous = code.parsed();
     yield* code.code.append(`${code_text}\n`, 0.1)
+}
+
+
+// 实现逼真的逐字符代码输入效果
+function* typeCodeEffect(
+    code: typeof Code,
+    text: string,
+    cursorRef?: {dot: {opacity: (value: number, duration?: number) => ThreadGenerator}},
+) {
+    const random = useRandom();
+    
+    for (const char of text) {
+        // 追加一个字符
+        yield* code.code.append(char, 0);
+        
+        // 如果有光标引用，显示光标
+        if (cursorRef) {
+            cursorRef.dot.opacity(1, 0.05);
+        }
+        
+        // 随机延迟，模拟真实打字速度
+        const delay = random.nextFloat(0.03, 0.12);
+        yield* waitFor(delay);
+        
+        // 光标闪烁效果
+        if (cursorRef) {
+            cursorRef.dot.opacity(0, 0.05);
+            yield* waitFor(0.05);
+            cursorRef.dot.opacity(1, 0.05);
+        }
+    }
 }
