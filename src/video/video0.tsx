@@ -347,7 +347,7 @@ export default makeScene2D(function* (view) {
                 x={view.width() / 4 + 900}
                 y={-10}
                 component={PyCode}
-                code={"int x=-10 \nprintf(abs(x)) \n "}
+                code={"int x=-10 \nprintf(abs(x)) \n"}
             >
             </Page>
         </>
@@ -511,9 +511,11 @@ export default makeScene2D(function* (view) {
     yield* waitFor(0.2);
     yield* typeCodeEffect(pageRef.code, 'print(result)', codecursorref);
 
+    yield* appendToCode("from pathlib import Path\n", pageRef.code);
 
 
-});
+
+   });
 
 function* appendToCode(
     code_text: string,

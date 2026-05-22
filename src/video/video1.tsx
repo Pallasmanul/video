@@ -1,5 +1,5 @@
 import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path, Layout, Txt } from '@motion-canvas/2d';
-import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn, makeRefs } from '@motion-canvas/core';
+import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn, makeRefs, useRandom } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCursor, createCodeCursorRef, PyCode, ProgressBar } from '../components';
 import { BoxGeometry } from 'three';
 import { CodeTerminal, createCodeTerminalRef } from '../components/CodeTerminal';
@@ -11,22 +11,23 @@ export default makeScene2D(function* (view) {
 
     view.fill('#0f0f0f');
 
-    
 
+    const titleRectRef = createRef<Rect>()
     const titleRef = createRef<Node>()
     const logoRef = createRef<Node>()
 
     view.add(
         <>
-            <Rect fill={'#af4000'} opacity={1} width={400} height={100} radius={16} x={0} y={0} direction={'column'} ref={titleRef}
+            <Rect fill={'#4b4b4b'} opacity={1} width={0} height={100} radius={16} x={0} y={0} direction={'column'} ref={titleRectRef}
                 padding={40}
                 gap={20}
+                scale={1.3}
                 layout>
 
                 <Rect layout={false}>
                     <Node
                         scale={0.3}
-                        position={[80, -80]}
+                        position={[60, -30]}
                         opacity={0}
                         ref={logoRef}
                     >
@@ -65,8 +66,10 @@ export default makeScene2D(function* (view) {
                     marginTop={-20}
                     fontFamily={'JetBrains Mono'}
                     fontWeight={700}
-                    fontSize={28}
+                    fontSize={38}
                     fill={'rgb(234, 234, 234)'}
+                    ref={titleRef}
+                    opacity={0}
                 >
                     {"Pathlib"}
                 </Txt>
@@ -74,8 +77,17 @@ export default makeScene2D(function* (view) {
         </>
     )
 
+    yield* all(
+        titleRectRef().width(250, 0.6),
+        titleRef().opacity(1, 0.6),
+    )
 
+    yield* waitUntil('click1')
 
+    yield* all(
+        titleRectRef().width(300, 0.6),
+        logoRef().opacity(1, 0.6),
+    )
 
     const libDocRef = createLibDocRef();
 
@@ -111,8 +123,213 @@ export default makeScene2D(function* (view) {
     );
 
 
+    yield* all(
+        titleRectRef().size(libDocRef.rect.size(), 0.6),
+        logoRef().opacity(0, 0.6),
+        titleRef().opacity(0, 0.6),
+        titleRectRef().opacity(0, 0.6),
+        libDocRef.rect.opacity(1, 0.6),
+    );
+
+    const pageRef = createPageRef();
+    const codecursorref = createCodeCursorRef();
+    const highlightLine = createRef<Rect>();
+    // 创建行号数量的信号，支持动态修改
+    const lineCount = createSignal(0);
+
+    // 根据行号数量动态生成行号代码
+    const lineNumbers = createComputed(() => {
+        return range(lineCount())
+            .map(i => (i + 1).toString().padStart(3, ' ') + ' ')
+            .join('\n');
+    });
+
+
+    view.add(
+        <>
+            <Node>
+                <Page
+                    refs={pageRef}
+                    label="main.py"
+                    opacity={0}
+                    theme={{
+                        bg: '#1e1e1e',
+                        bgDark: '#0f0d0c',
+                        radius: 16,
+                    }}
+                    height={900}
+                    width={800}
+                    component={PyCode}
+                    code={"# 导入 pathlib"}
+                >
+                </Page>
+            </Node>
+        </>
+    )
+
+
+    // 获取代码第 2 行（索引为 1）开头的位置
+    const targetLine = createSignal(1)
+
+
+    // 获取该行的世界坐标位置
+    const linePosition = createComputed(() => {
+        const line = targetLine();
+        // 使用 getPointBBox 获取特定位置的边界框
+        const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
+        return pageRef.code.localToWorld().transformPoint(pointBBox().position)
+    }
+    );
+
+    // 计算高亮矩形的位置和大小
+    const highlightRectProps = createComputed(() => {
+        const line = targetLine();
+        // 使用 getPointBBox 获取当前行开头的位置
+        const pointBBox = pageRef.code.getPointBBox([line, 0]);
+        const worldPos = pageRef.code.localToWorld().transformPoint(pointBBox.position);
+        // 基于 Page 组件的 lineHeight='150%' 和字体大小计算行高
+        const baseFontSize = 24;
+        const lineHeight = baseFontSize * 1.5; // 150% 的行高
+        return {
+            position: worldPos,
+            width: pageRef.rect.width() - 160,
+            height: lineHeight,
+        };
+    });
+
+    view.add(
+        <>
+            <CodeCursor
+                refs={codecursorref}
+                absolutePosition={() => {
+                    const line = targetLine();
+                    // 使用 getPointBBox 获取特定位置的边界框
+                    const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
+                    return pageRef.code.localToWorld().transformPoint(pointBBox().position)
+                }}
+                offset={[7, -2]}
+                layout={false}
+            />
+            <PlainCode
+                x={-350}
+                y={60}
+                fill={'#666'}
+                fontWeight={700}
+                absolutePosition={() => {
+                    const line = 1;
+                    const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
+                    return pageRef.code.localToWorld().transformPoint(pointBBox().position)
+                }}
+                code={lineNumbers}
+                offset={[1, -1]}
+            />
+            {/* 行背景高亮矩形 */}
+            <Rect
+                ref={highlightLine}
+                stroke="#515151"
+                lineWidth={2}
+                opacity={1}
+                absolutePosition={() => highlightRectProps().position}
+                width={() => highlightRectProps().width}
+                height={() => highlightRectProps().height}
+                offset={[-1, -1]}
+                layout={false}
+            />
+        </>
+    );
+    yield* codecursorref.dot.opacity(0, 0);
+
+    // createEffect(() => {
+    //     const currentLine = targetLine();
+    //     // 模拟代码执行的终端输出
+    //     switch (currentLine) {
+    //         case 2:
+    //             spawn(function* () {
+    //                 yield* appendToCode("pallasmanul@~: 10", codeTerminalRef.code);
+    //             });
+    //             break;
+    //     }
+    // });
+    // 创建指针跳转动画函数
+    function* cursorJumpAnimation() {
+        const targetRanges = [[1, 3]]; // 指针跳转的行序列
+
+        for (const [start, end] of targetRanges) {
+            // 遍历当前范围内的每一行
+            for (let line = start; line <= end; line++) {
+                yield* tween(0.2, (value) => {
+                    const easedValue = easeInOutCubic(value);
+                    const current = targetLine();
+                    const next = line;
+                    targetLine(Math.round(current + (next - current) * easedValue));
+                });
+            }
+        }
+        targetLine(1);
+    }
+
+    //    创建循环动画
+    yield loop(function* () {
+        yield* cursorJumpAnimation();
+    });
+
+
+
+
+    yield* waitUntil('click2')
+
+    yield* all(
+        libDocRef.rect.opacity(0, 0.6),
+        libDocRef.rect.size(pageRef.rect.size(), 0.6),
+        libDocRef.rect.position(pageRef.rect.position(), 0.6),
+        pageRef.rect.opacity(1, 0.6),
+    );
+
+    yield* all(
+        lineCount(2, 0.1),
+        typeCodeEffect(pageRef.code, '\nfrom pathlib import Path'),
+    );
 
 
     yield* waitFor(3);
 
 })
+
+
+function* appendToCode(
+    code_text: string,
+    code: typeof Code,
+) {
+    const previous = code.parsed();
+    yield* code.code.append(`${code_text}\n`, 0.1)
+}
+
+// 实现逼真的逐字符代码输入效果
+function* typeCodeEffect(
+    code: typeof Code,
+    text: string,
+    cursorRef?: { dot: { opacity: (value: number, duration?: number) => ThreadGenerator } },
+) {
+    const random = useRandom();
+
+    for (const char of text) {
+        // 追加一个字符
+        yield* code.code.append(char, 0);
+
+        // 如果有光标引用，显示光标
+        if (cursorRef) {
+            cursorRef.dot.opacity(1, 0.05);
+        }
+
+        // 随机延迟，模拟真实打字速度
+        const delay = random.nextFloat(0.03, 0.12);
+        yield* waitFor(delay);
+
+        // 光标闪烁效果
+        if (cursorRef) {
+            cursorRef.dot.opacity(0, 0.05);
+            yield* waitFor(0.05);
+            cursorRef.dot.opacity(1, 0.05);
+        }
+    }
+}
