@@ -153,6 +153,7 @@ export default makeScene2D(function* (view) {
             <Node>
                 <Page
                     refs={pageRef}
+                    x={-400}
                     label="main.py"
                     opacity={0}
                     stroke="#b50000"
