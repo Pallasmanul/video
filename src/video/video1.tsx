@@ -150,6 +150,7 @@ export default makeScene2D(function* (view) {
             <Node>
                 <Page
                     refs={pageRef}
+                    x={-400}
                     label="main.py"
                     opacity={0}
                     theme={{
@@ -201,6 +202,7 @@ export default makeScene2D(function* (view) {
         <>
             <CodeCursor
                 refs={codecursorref}
+                opacity={0}
                 absolutePosition={() => {
                     const line = targetLine();
                     // 使用 getPointBBox 获取特定位置的边界框
@@ -228,7 +230,7 @@ export default makeScene2D(function* (view) {
                 ref={highlightLine}
                 stroke="#515151"
                 lineWidth={2}
-                opacity={1}
+                opacity={0}
                 absolutePosition={() => highlightRectProps().position}
                 width={() => highlightRectProps().width}
                 height={() => highlightRectProps().height}
