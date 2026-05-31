@@ -3,11 +3,15 @@
   "timeEvents": [
     {
       "name": "click1",
-      "targetTime": 1.9062801932367153
+      "targetTime": 1.4693416133851733
     },
     {
       "name": "click2",
-      "targetTime": 4.57584541062802
+      "targetTime": 5.1743017827828774
+    },
+    {
+      "name": "click3",
+      "targetTime": 12.03957684459722
     }
   ],
   "seed": 3015696876

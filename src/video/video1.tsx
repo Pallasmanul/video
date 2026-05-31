@@ -1,5 +1,5 @@
-import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path, Layout, Txt } from '@motion-canvas/2d';
-import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn, makeRefs, useRandom } from '@motion-canvas/core';
+import { Circle, Code, lines, makeScene2D, Rect, SVG, Node, Path, Layout, Txt, Curve, Line, LineProps, word } from '@motion-canvas/2d';
+import { all, createRef, Logger, waitFor, debug, createRefArray, loop, linear, waitUntil, range, chain, sequence, easeInOutCubic, createSignal, createComputed, run, join, tween, createEffect, spawn, makeRefs, useRandom, Origin, Center, Vector2, createRefMap, cancel } from '@motion-canvas/core';
 import { Mouse, Paper, createMouseRef, Window, Slider, Container, createPageRef, Page, ATxt, PlainCode, CodeCursor, createCodeCursorRef, PyCode, ProgressBar } from '../components';
 import { BoxGeometry } from 'three';
 import { CodeTerminal, createCodeTerminalRef } from '../components/CodeTerminal';
@@ -123,6 +123,8 @@ export default makeScene2D(function* (view) {
     );
 
 
+    yield* waitUntil('click2')
+
     yield* all(
         titleRectRef().size(libDocRef.rect.size(), 0.6),
         logoRef().opacity(0, 0.6),
@@ -133,6 +135,7 @@ export default makeScene2D(function* (view) {
 
     const pageRef = createPageRef();
     const codecursorref = createCodeCursorRef();
+    const lineNumbersRef = createRef<Code>();
     const highlightLine = createRef<Rect>();
     // 创建行号数量的信号，支持动态修改
     const lineCount = createSignal(0);
@@ -152,13 +155,15 @@ export default makeScene2D(function* (view) {
                     refs={pageRef}
                     label="main.py"
                     opacity={0}
+                    stroke="#b50000"
+                    strokeFirst
                     theme={{
                         bg: '#1e1e1e',
                         bgDark: '#0f0d0c',
                         radius: 16,
                     }}
                     height={900}
-                    width={800}
+                    width={850}
                     component={PyCode}
                     code={"# 导入 pathlib"}
                 >
@@ -166,7 +171,13 @@ export default makeScene2D(function* (view) {
             </Node>
         </>
     )
+    const codeTerminalRef = createCodeTerminalRef();
 
+    view.add(
+        <>
+            <CodeTerminal refs={codeTerminalRef} fill={'#1e1e1e'} opacity={0} width={() => pageRef.rect.width()} height={200} x={() => pageRef.rect.x()} y={360} />
+        </>
+    )
 
     // 获取代码第 2 行（索引为 1）开头的位置
     const targetLine = createSignal(1)
@@ -201,6 +212,7 @@ export default makeScene2D(function* (view) {
         <>
             <CodeCursor
                 refs={codecursorref}
+                opacity={0}
                 absolutePosition={() => {
                     const line = targetLine();
                     // 使用 getPointBBox 获取特定位置的边界框
@@ -215,6 +227,7 @@ export default makeScene2D(function* (view) {
                 y={60}
                 fill={'#666'}
                 fontWeight={700}
+                ref={lineNumbersRef}
                 absolutePosition={() => {
                     const line = 1;
                     const pointBBox = () => pageRef.code.getPointBBox([line, 0]);
@@ -228,7 +241,7 @@ export default makeScene2D(function* (view) {
                 ref={highlightLine}
                 stroke="#515151"
                 lineWidth={2}
-                opacity={1}
+                opacity={0}
                 absolutePosition={() => highlightRectProps().position}
                 width={() => highlightRectProps().width}
                 height={() => highlightRectProps().height}
@@ -269,14 +282,15 @@ export default makeScene2D(function* (view) {
     }
 
     //    创建循环动画
-    yield loop(function* () {
-        yield* cursorJumpAnimation();
-    });
+    // yield loop(function* () {
+    //     yield* cursorJumpAnimation();
+    // });
 
 
 
 
-    yield* waitUntil('click2')
+    yield* waitUntil('click3')
+
 
     yield* all(
         libDocRef.rect.opacity(0, 0.6),
@@ -285,13 +299,224 @@ export default makeScene2D(function* (view) {
         pageRef.rect.opacity(1, 0.6),
     );
 
+
+    // animatedDash(16, 24)(pageRef.rect);
+    // yield* pageRef.rect.lineWidth(16, 0.3);
+    // yield* waitUntil('click4')
+    // yield* pageRef.rect.lineWidth(0, 0.3);
+
+
+    const PathRef = createRefMap<Rect>();
+    const ArrowRef = createRefMap<Line>();
+
+    view.add(
+        <>
+            <Rect opacity={0} size={[200, 100]} position={[500, -380]} fill={'#0063ba'} stroke={"#e1ff00"} radius={18} ref={PathRef.pathlib}>
+                <ATxt text="pathlib" fill={'#ffffff'} fontSize={24} fontWeight={700} />
+            </Rect>
+            <Rect opacity={0} size={[200, 100]} position={[350, -200]} fill={'#ba0000'} stroke={"#e1ff00"} radius={18} ref={PathRef.purepath}>
+                <ATxt text="PurePath" fill={'#ffffff'} fontSize={24} fontWeight={700} />
+            </Rect>
+            <Rect opacity={0} size={[200, 100]} position={[650, -200]} fill={'#ba0000'} stroke={"#e1ff00"} radius={18} ref={PathRef.path}>
+                <ATxt text="Path" fill={'#ffffff'} fontSize={24} fontWeight={700} />
+            </Rect>
+            <Arrow
+                from={PathRef.pathlib()}
+                to={PathRef.purepath()}
+                fromDirection={Origin.Left}
+                toDirection={Origin.Top}
+                opacity={0}
+                ref={ArrowRef.arrow1}
+            />
+            <Arrow
+                from={PathRef.pathlib()}
+                to={PathRef.path()}
+                fromDirection={Origin.Right}
+                toDirection={Origin.Top}
+                opacity={0}
+                ref={ArrowRef.arrow2}
+            />
+        </>
+    )
+
+
+    yield* all(
+        pageRef.rect.x(-400, 0.6, easeInOutCubic),
+    )
+
     yield* all(
         lineCount(2, 0.1),
-        typeCodeEffect(pageRef.code, '\nfrom pathlib import Path'),
+        typeCodeEffect(pageRef.code, '\nfrom pathlib import Path, PurePath'),
+        sequence(
+            0.6,
+            PathRef.pathlib().opacity(1, 0.6),
+            all(PathRef.purepath().opacity(1, 0.6),
+                PathRef.path().opacity(1, 0.6),),
+            all(ArrowRef.arrow1().opacity(1, 0.6), ArrowRef.arrow2().opacity(1, 0.6))
+        ),
     );
 
 
-    yield* waitFor(3);
+    animatedDash(5, 10)(PathRef.path()),
+        animatedDash(5, 10)(PathRef.purepath()),
+
+        yield* all(
+            PathRef.path().lineWidth(8, 0.6),
+            PathRef.purepath().lineWidth(8, 0.6),
+        )
+
+    const pathpuDoc = createRef<Rect>();
+    const pathpuText = createRefMap<Txt>();
+
+    view.add(
+        <>
+            <Rect fill={"#1e1e1e"} radius={16} opacity={1} padding={30} direction={'column'} gap={20} layout y={100} ref={pathpuDoc}>
+                <Txt fill={'#ffd43b'} fontSize={48} fontWeight={700} ref={pathpuText.purepath}>
+                    PurePath（纯路径类）
+                </Txt>
+                <Txt fill={'#a0a0a0'} fontSize={28} lineHeight={1.6} ref={pathpuText.purepathDescr}>
+                    • 仅处理路径字符串，不访问真实文件系统
+                </Txt>
+                <Rect height={2} fill={'#3d3d3d'} />
+                <Txt fill={'#4ec9b0'} fontSize={48} fontWeight={700} ref={pathpuText.path}>
+                    Path（具体路径类）
+                </Txt>
+                <Txt fill={'#a0a0a0'} fontSize={28} lineHeight={1.6} ref={pathpuText.pathDescr}>
+                    • 继承自 PurePath，最常用的路径类
+                    \n• 可直接操作文件/目录（读写、创建、删除等）
+                    \n• 自动适配当前操作系统
+                </Txt>
+            </Rect>
+
+        </>
+    )
+
+    yield* all(
+        pageRef.rect.filters.blur(10, 1),
+        lineNumbersRef().filters.blur(10, 1),
+        PathRef.pathlib().filters.blur(10, 1),
+        // PathRef.purepath().filters.blur(10,1),
+        // PathRef.path().filters.blur(10,1),
+        ArrowRef.arrow1().filters.blur(10, 1),
+        ArrowRef.arrow2().filters.blur(10, 1),
+    );
+
+    yield* waitFor(2);
+
+
+    yield* all(
+        pathpuText.purepath().fill('#3a3a3a', 0.6),
+        pathpuText.purepathDescr().fill('#3a3a3a', 0.6),
+        PathRef.purepath().lineWidth(0, 0.6),
+    );
+
+    yield* waitFor(2);
+
+    yield* all(
+        PathRef.path().lineWidth(0, 0.6),
+        PathRef.purepath().lineWidth(0, 0.6),
+        pathpuDoc().opacity(0, 0.6),
+        pageRef.rect.filters.blur(0, 1),
+        lineNumbersRef().filters.blur(0, 1),
+        PathRef.pathlib().filters.blur(0, 1),
+        // PathRef.purepath().filters.blur(10,1),
+        // PathRef.path().filters.blur(10,1),
+        ArrowRef.arrow1().filters.blur(0, 1),
+        ArrowRef.arrow2().filters.blur(0, 1),
+    )
+
+    yield* waitFor(2);
+
+    yield* all(
+        PathRef.purepath().opacity(0, 0.6),
+        ArrowRef.arrow1().opacity(0, 0.6),
+        ArrowRef.arrow2().opacity(0, 0.6),
+        PathRef.path().x(PathRef.pathlib().x(), 0.6),
+        pageRef.code.code.remove(word(1, 24, 10), 0.6),
+    )
+    yield* waitFor(0.6)
+
+    yield* all(
+        PathRef.pathlib().opacity(0, 0.6),
+        PathRef.path().y(-300, 0.6),
+    );
+
+    const window = createRef<Window>();
+    const work_space_rect = createRefMap<Rect>();
+    const work_space_file_ref = createRefMap<typeof Paper>();
+    const work_space_text = createRefMap<Txt>();
+    view.add(
+        <>
+            <Window
+                ref={window}
+                theme={{
+                    window: '#333333',
+                    buttons: '#0f0d0c',
+                }}
+                // x={view.width() / -2 + 40 + 984 / 2}
+                x={-view.width() / -4 + 20}
+                y={-view.height() / -4 - 180}
+                height={500}
+                scale={0.9}
+                opacity={1}
+                // width={984}
+                width={view.width() / 2 - 60 - 80}
+            >
+                <Layout direction={'column'} gap={20}>
+                    <Rect height={40} opacity={1} marginLeft={30} ref={work_space_rect.work}>
+                        <ATxt ref={work_space_text.work_dir}>/home/pallasmanul/work</ATxt>
+                    </Rect>
+                    <Layout>
+                        <Rect layout padding={40} direction={'column'} gap={20} ref={work_space_rect.file_main}>
+                            <Paper fill={'#ffffff'} width={80} height={110} opacity={1} ref={work_space_file_ref.file_main}>
+                            </Paper>
+                            <Txt fill={'#ffffff'} fontSize={28} fontWeight={700} ref={work_space_text.file_main_name}>
+                                main.py
+                            </Txt>
+                        </Rect>
+                        <Rect layout padding={40} direction={'column'} gap={20} ref={work_space_rect.file_test} opacity={0}>
+                            <Paper fill={'#ffffff'} width={80} height={110} opacity={1} ref={work_space_file_ref.file_test}>
+                            </Paper>
+                            <Txt fill={'#ffffff'} fontSize={28} fontWeight={700} ref={work_space_text.file_test_name}>
+                                test.txt
+                            </Txt>
+                        </Rect>
+                    </Layout>
+                </Layout>
+            </Window>
+        </>
+    );
+
+    yield* waitFor(2);
+    // 创建指针跳转动画函数
+    function* FlashFile() {
+        yield* work_space_rect.file_test().opacity(0, 0.3);
+        yield* work_space_rect.file_test().opacity(0.6, 0.3);
+        yield* work_space_rect.file_test().opacity(0, 0.3);
+        yield* work_space_rect.file_test().opacity(0.6, 0.3);
+    }
+
+    yield* sequence(
+        1.2,
+        all(
+            lineCount(4, 0.1),
+            appendToCode('\n \np = Path("test.txt")', pageRef.code),
+            work_space_rect.file_test().opacity(0.5, 0.6)
+        )
+    );
+    const flashTask = spawn(loop(function* () {
+        yield* FlashFile();
+    }));
+    yield* sequence(
+        2.4,
+        pageRef.code.code.replace(word(3, 10, 8), "/home/pallasmanul/work/test.txt", 0.6),
+        pageRef.code.code.replace(word(3, 0, 100), "p = Path.home() / 'work' / 'test.txt'", 0.6),
+    )
+
+    yield* waitFor(2)
+    cancel(flashTask);
+    
+    yield* waitFor(6);
 
 })
 
@@ -332,4 +557,87 @@ function* typeCodeEffect(
             cursorRef.dot.opacity(1, 0.05);
         }
     }
+}
+
+function Arrow({
+    from,
+    to,
+    fromDirection,
+    toDirection,
+    ...props
+}: LineProps & {
+    from: Layout;
+    to: Layout;
+    fromDirection?: Origin;
+    toDirection?: Origin;
+}) {
+    const fromVertical = fromDirection & Center.Vertical;
+    const toVertical = toDirection & Center.Vertical;
+    let center = (): PossibleVector2 =>
+        Vector2.lerp(
+            from.cardinalPoint(fromDirection)(),
+            to.cardinalPoint(toDirection)(),
+            0.5,
+        );
+
+    if (fromVertical !== toVertical) {
+        center = fromVertical
+            ? () => [
+                from.cardinalPoint(fromDirection)().x,
+                to.cardinalPoint(toDirection)().y,
+            ]
+            : () => [
+                to.cardinalPoint(toDirection)().x,
+                from.cardinalPoint(fromDirection)().y,
+            ];
+    }
+
+    return (
+        <Line
+            lineWidth={8}
+            stroke={"#3d3d3d"}
+            endArrow
+            startOffset={20}
+            radius={8}
+            endOffset={20}
+            points={[
+                from.cardinalPoint(fromDirection),
+                center,
+                to.cardinalPoint(toDirection),
+            ]}
+            {...props}
+        />
+    );
+}
+
+const DASH = [8, 8, 8, 32, 8, 8, 8];
+const DASH_OFFSET = DASH.reduce((a, b) => a + b, 0);
+
+function animatedDash(parts = 5, duration = 8) {
+    return (node: Curve) => {
+        node.lineDash(() => {
+            return [node.arcLength() / parts - DASH_OFFSET, ...DASH];
+        });
+        spawn(
+            loop(() =>
+                node
+                    .lineDashOffset(0)
+                    .lineDashOffset(node.arcLength(), duration, linear),
+            ),
+        );
+    };
+}
+
+function animatedFlash(duration = 8) {
+    return (node: Rect) => {
+        spawn(
+            loop(function* () {
+                yield* node.opacity(0, duration);
+                yield* waitFor(duration);
+                yield* node.opacity(0.6, duration);
+                yield* waitFor(duration);
+            }
+            ),
+        );
+    };
 }
