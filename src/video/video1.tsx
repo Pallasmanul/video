@@ -82,7 +82,7 @@ export default makeScene2D(function* (view) {
         titleRef().opacity(1, 0.6),
     )
 
-    yield* waitUntil('click1')
+    yield* waitFor(1);
 
     yield* all(
         titleRectRef().width(300, 0.6),
@@ -123,7 +123,7 @@ export default makeScene2D(function* (view) {
     );
 
 
-    yield* waitUntil('click2')
+    yield* waitFor(1);
 
     yield* all(
         titleRectRef().size(libDocRef.rect.size(), 0.6),
@@ -290,7 +290,7 @@ export default makeScene2D(function* (view) {
 
 
 
-    yield* waitUntil('click3')
+    yield* waitFor(1);
 
 
     yield* all(
@@ -497,27 +497,53 @@ export default makeScene2D(function* (view) {
         yield* work_space_rect.file_test().opacity(0.6, 0.3);
     }
 
+
+    
     yield* sequence(
         1.2,
         all(
             lineCount(4, 0.1),
-            appendToCode('\n \np = Path("test.txt")', pageRef.code),
+            appendToCode('\n# 创建Path对象 \np = Path("test.txt")', pageRef.code),
             work_space_rect.file_test().opacity(0.5, 0.6)
         )
     );
-    const flashTask = spawn(loop(function* () {
-        yield* FlashFile();
-    }));
+
+
+    yield* waitFor(1);
+
+
     yield* sequence(
         2.4,
         pageRef.code.code.replace(word(3, 10, 8), "/home/pallasmanul/work/test.txt", 0.6),
-        pageRef.code.code.replace(word(3, 0, 100), "p = Path.home() / 'work' / 'test.txt'", 0.6),
+        pageRef.code.code.replace(word(3, 0, 100), "p = Path.home() / 'work' / 'test.txt'\n", 0.6),
     )
 
-    yield* waitFor(2)
+    codecursorref.bg.opacity(1);
+    targetLine(4);
+
+    const flashTask = spawn(loop(function* () {
+        yield* FlashFile();
+    }));
+
+    yield* waitFor(1);
+
+    yield* all(
+        lineCount(6, 0.1),
+        targetLine(6, 0.1),
+        appendToCode("# 检查文件是否存在\nprint( p.exists() )", pageRef.code),
+    );
+
+    yield* waitFor(1);
+
+    yield* all(
+        lineCount(8, 0.1),
+        targetLine(8, 0.1),
+        appendToCode("# 创建文件\np.touch()", pageRef.code),
+        work_space_rect.file_test().opacity(1, 0.1),
+    );
     cancel(flashTask);
-    
-    yield* waitFor(6);
+
+    yield* waitFor(1);
 
 })
 
