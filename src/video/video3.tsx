@@ -29,13 +29,19 @@ export default makeScene2D(function* (view) {
         ref.opacity(0);
     }
 
-    // yield* sequence(
-    //     0.3,
-    //     paperRef().height(300, 0.6),
-    //     all(...titleRef.map((ref) => ref.opacity(1, 0.6))),
-    // );
+    yield* sequence(
+        0.3,
+        paperRef().height(300, 0.6),
+        all(...titleRef.map((ref) => ref.opacity(1, 0.6))),
+    );
 
-    // yield* waitFor(1);
+    yield* waitFor(1);
+
+    paperRef().height(0);
+    for (const ref of titleRef) {
+        ref.opacity(0);
+    }
+
 
     /** ********************************************************** */
     /**                        Code Component                      */
@@ -197,12 +203,12 @@ export default makeScene2D(function* (view) {
 
 
     view.add(
-        <Rect fill={'#dbdbdb'} opacity={1} width={400} height={400} radius={16} layout direction={'column'} justifyContent={'center'} alignItems={'center'} gap={60}>
+        <Rect fill={'#dbdbdb'} opacity={0} width={400} height={400} radius={16} layout direction={'column'} justifyContent={'center'} alignItems={'center'} gap={60} scale={1.5}>
             <ATxt text={"有啥能帮你的吗?"} fontStyle={'Bold'} fontSize={34} fill={'#000'} />
             <Rect stroke={'#5b5b5b'} lineWidth={2} width={'80%'} height={'40%'} radius={8} minWidth={200} layout direction={'column'}>
                 <Layout direction={'column'} alignItems={'start'} height={'90%'} paddingLeft={10}>
-                    <ATxt text={"你好"} fontStyle={'Bold'} fontSize={16} fill={'#000'}/>
-                    <ATxt text={"只使用基础语法"} fontStyle={'Bold'} fontSize={16} fill={'#000'}/>
+                    <ATxt text={"你好"} fontStyle={'Bold'} fontSize={16} fill={'#000'} />
+                    <ATxt text={"只使用基础语法"} fontStyle={'Bold'} fontSize={16} fill={'#000'} />
                 </Layout>
                 <Layout direction={'row'} alignItems={'end'} height={40}>
                     <Layout width={'100%'} height={'10%'} gap={20} alignItems={'end'} padding={10} justifyContent={'start'}>
@@ -218,11 +224,12 @@ export default makeScene2D(function* (view) {
                         </Circle>
                     </Layout>
                 </Layout>
-
             </Rect>
         </Rect>
     )
 
+    yield* pageRef.rect.opacity(1, 0.6);
+    yield* pageRef.code.code.append('\nprint("hello world")', 0.6);
 
     yield* waitFor(5);
 

@@ -22,20 +22,17 @@ import {
 import { ATxt } from './ATxt';
 import { PlainCode, RSCode } from './Code';
 
-export function createPageRef() {
-  return makeRefs<typeof Page>();
+
+export interface PageRefs {
+  rect: Rect;
+  inner: Rect;
+  code: Code;
+  wrapper: Node;
+  badge: Txt;
+  scroll: SimpleSignal<number>;
 }
 
-export function Page({
-  refs,
-  code,
-  label,
-  theme,
-  badge,
-  component = RSCode,
-  lineHeight = '150%',
-  ...props
-}: RectProps & {
+export interface PageProps extends RectProps {
   code: SignalValue<PossibleCodeScope>;
   component?: FunctionComponent<CodeProps>;
   label?: SignalValue<string>;
@@ -45,15 +42,24 @@ export function Page({
     bgDark: string;
     radius: number;
   };
-  refs: {
-    rect: Rect;
-    inner: Rect;
-    code: Code;
-    wrapper: Node;
-    badge: Txt;
-    scroll: SimpleSignal<number>;
-  };
-}) {
+  refs?: PageRefs;
+}
+
+export function createPageRef() {
+  //return makeRefs<typeof Page>();
+  return {} as PageRefs;
+}
+
+export function Page({
+  refs = {} as PageRefs,
+  code,
+  label,
+  theme,
+  badge,
+  component = RSCode,
+  lineHeight = '150%',
+  ...props
+}: PageProps) {
   refs.scroll = createSignal(0);
   const CodeComponent = component;
 

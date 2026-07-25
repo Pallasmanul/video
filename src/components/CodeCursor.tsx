@@ -1,23 +1,27 @@
-import { Circle, initial, Layout, Line, LineProps, Rect, Shape, ShapeProps, signal } from '@motion-canvas/2d';
-import { createComputed, createSignal, makeRef, makeRefs, SignalValue, SimpleSignal, Vector2Signal } from '@motion-canvas/core';
+import { Circle, initial, Layout, LayoutProps, Line, LineProps, Rect, Shape, ShapeProps, signal } from '@motion-canvas/2d';
+import { createComputed, createSignal, makeRef, makeRefs, PossibleVector2, SignalValue, SimpleSignal, Vector2Signal } from '@motion-canvas/core';
 
+export interface CodeCursorRefs {
+    bg: Layout;
+    arrow: Line;
+    size: SimpleSignal<number>;
+    dot: Circle;
+}
+ 
+export interface CodeCursorProps extends LayoutProps {
+    refs?: CodeCursorRefs;
+    absolutePosition?: SignalValue<PossibleVector2>;    
+}
 
 
 export function createCodeCursorRef() {
-    return makeRefs<typeof CodeCursor>();
+    return {} as CodeCursorRefs;
 }
 
 export function CodeCursor({
     refs,
     ...props
-}: LineProps & {
-    refs: {
-        bg: Layout;
-        arrow: Line;
-        size: SimpleSignal<number>;
-        dot: Circle;
-    };
-}) {
+}: CodeCursorProps) {
     refs.size = createSignal(20);
 
     return (
